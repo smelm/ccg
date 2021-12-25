@@ -1,8 +1,8 @@
 from operator import itemgetter
 import pytest
-import nltk.ccg.lexicon as lex
-from nltk.ccg.api import Direction, FunctionalCategory, PrimitiveCategory
-from nltk.ccg.lexicon_builder import LexiconBuilder
+import ccg.lexicon as lex
+from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
+from ccg.lexicon_builder import LexiconBuilder
 from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable
 
 

@@ -10,7 +10,7 @@ CCG Combinators
 
 from abc import ABCMeta, abstractmethod
 
-from nltk.ccg.api import FunctionalCategory
+from ccg.api import FunctionalCategory
 
 
 class UndirectedBinaryCombinator(metaclass=ABCMeta):

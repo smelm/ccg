@@ -13,7 +13,7 @@ import re
 from collections import defaultdict
 from typing import Dict, List, Set
 
-from nltk.ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
+from ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
 from nltk.internals import deprecated
 from nltk.sem.logic import Expression
 

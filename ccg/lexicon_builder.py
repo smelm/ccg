@@ -1,5 +1,5 @@
-from nltk.ccg.api import PrimitiveCategory
-from nltk.ccg.lexicon import CCGLexicon, Token
+from ccg.api import PrimitiveCategory
+from ccg.lexicon import CCGLexicon, Token
 from collections import defaultdict
 
 class LexiconBuilder:

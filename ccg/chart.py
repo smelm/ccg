@@ -32,8 +32,8 @@ python chart.py
 
 import itertools
 
-from nltk.ccg.combinator import *
-from nltk.ccg.combinator import (
+from ccg.combinator import *
+from ccg.combinator import (
     BackwardApplication,
     BackwardBx,
     BackwardComposition,
@@ -44,8 +44,8 @@ from nltk.ccg.combinator import (
     ForwardSubstitution,
     ForwardT,
 )
-from nltk.ccg.lexicon import Token, fromstring
-from nltk.ccg.logic import *
+from ccg.lexicon import Token, fromstring
+from ccg.logic import *
 from nltk.parse import ParserI
 from nltk.parse.chart import AbstractChartRule, Chart, EdgeI
 from nltk.sem.logic import *
