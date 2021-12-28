@@ -1,6 +1,9 @@
 from operator import itemgetter
+from re import L
+from typing import Tuple
 import pytest
 from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable
+from nltk.tree.tree import Tree
 
 import ccg.lexicon as lex
 from ccg.lexicon_builder import LexiconBuilder
@@ -8,7 +11,7 @@ from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
 
 
 # import for them to show up in coverage
-from ccg.chart import CCGChartParser, DefaultRuleSet
+from ccg.chart import CCGChartParser, DefaultRuleSet, printCCGDerivation, printCCGTree
 import ccg.combinator
 import ccg.lexicon
 import ccg.logic
@@ -209,7 +212,111 @@ class TestLexiconBuilder:
             assert category_equals(lexicon_from_builder_with_semantics._families[ident],
                                         lexicon_with_semantics._families[ident])
 
-    
+
+class TestChart:
+
+    def setup_method(self):
+        self.parser = CCGChartParser(lexicon, DefaultRuleSet)
+
+
+    def test_can_parse_sentences(self, capsys):
+        parses = self.parser.parse("I read the book".split(" "))
+
+        parses = list(parses)
+
+        expected_ouputs = map("\n".join, [
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "                 ----------------------------->",
+                "                           NP['sg']",
+                "    ------------------------------------------>",
+                "                      (S\\NP)",
+                "----------------------------------------------<",
+                "                      S"
+            ],
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "    --------------------------------->B",
+                "            ((S\\NP)/N['sg'])",
+                "    ------------------------------------------>",
+                "                      (S\\NP)",
+                "----------------------------------------------<",
+                "                      S"
+            ],
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "---->T",
+                "(S/(S\\NP))",
+                "                 ----------------------------->",
+                "                           NP['sg']",
+                "    ------------------------------------------>",
+                "                      (S\\NP)",
+                "---------------------------------------------->",
+                "                      S"
+            ],
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "---->T",
+                "(S/(S\\NP))",
+                "    --------------------------------->B",
+                "            ((S\\NP)/N['sg'])",
+                "    ------------------------------------------>",
+                "                      (S\\NP)",
+                "---------------------------------------------->",
+                "                      S"
+            ],
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "---->T",
+                "(S/(S\\NP))",
+                "----------------->B",
+                "     (S/NP)",
+                "                 ----------------------------->",
+                "                           NP['sg']",
+                "---------------------------------------------->",
+                "                      S"
+            ],
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "---->T",
+                "(S/(S\\NP))",
+                "    --------------------------------->B",
+                "            ((S\\NP)/N['sg'])",
+                "------------------------------------->B",
+                "             (S/N['sg'])",
+                "---------------------------------------------->",
+                "                      S",
+            ],
+            [
+                "I      read             the           book",
+                " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+                "---->T",
+                "(S/(S\\NP))",
+                "----------------->B",
+                "     (S/NP)",
+                "------------------------------------->B",
+                "             (S/N['sg'])",
+                "---------------------------------------------->",
+                "                      S"
+            ],
+        ])
+
+        for parse, expected in zip(parses, expected_ouputs):
+            printCCGDerivation(parse)
+
+            captured = capsys.readouterr().out.strip()
+
+            assert captured == expected
+
+
+
+
 # TODO: for now this is for testing, should be moved into __eq__ eventually
 def category_equals(a, b):
     def both_are_instance(a, b, typ):
