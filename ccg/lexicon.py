@@ -70,6 +70,7 @@ class Token:
             return str(self._category)
 
 
+# TODO: why is start a string but primitives a List of PrimitiveCategory?
 class CCGLexicon:
     """
     Class representing a lexicon for CCG grammars.
@@ -85,11 +86,11 @@ class CCGLexicon:
         self._families = families
         self._entries = entries
 
-    def categories(self, word):
+    def categories(self, word: str) -> any:
         """Returns all the possible categories for a word"""
         return self._entries[word]
 
-    def start(self):
+    def start(self) -> str:
         """Return the target category for the parser"""
         return self._start
 
@@ -212,7 +213,7 @@ def augParseCategory(line, primitives, families, var=None):
     return (res, var)
 
 
-def fromstring(lex_str:str, include_semantics: bool=False):
+def fromstring(lex_str: str, include_semantics: bool=False):
     """
     Convert string representation into a lexicon for CCGs.
     """

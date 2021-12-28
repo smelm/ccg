@@ -31,6 +31,7 @@ python chart.py
 """
 
 import itertools
+from typing import List
 
 from ccg.combinator import *
 from ccg.combinator import (
@@ -44,7 +45,7 @@ from ccg.combinator import (
     ForwardSubstitution,
     ForwardT,
 )
-from ccg.lexicon import Token, fromstring
+from ccg.lexicon import CCGLexicon, Token, fromstring
 from ccg.logic import *
 from nltk.parse import ParserI
 from nltk.parse.chart import AbstractChartRule, Chart, EdgeI
@@ -264,7 +265,7 @@ class CCGChartParser(ParserI):
     Based largely on the ChartParser class from NLTK.
     """
 
-    def __init__(self, lexicon, rules, trace=0):
+    def __init__(self, lexicon: CCGLexicon, rules, trace=0):
         self._lexicon = lexicon
         self._rules = rules
         self._trace = trace
@@ -273,7 +274,7 @@ class CCGChartParser(ParserI):
         return self._lexicon
 
     # Implements the CYK algorithm
-    def parse(self, tokens):
+    def parse(self, tokens: List[str]):
         tokens = list(tokens)
         chart = CCGChart(list(tokens))
         lex = self._lexicon
@@ -307,7 +308,7 @@ class CCGChartParser(ParserI):
 
 
 class CCGChart(Chart):
-    def __init__(self, tokens):
+    def __init__(self, tokens: List[str]):
         Chart.__init__(self, tokens)
 
     # Constructs the trees for a given parse. Unfortnunately, the parse trees need to be
