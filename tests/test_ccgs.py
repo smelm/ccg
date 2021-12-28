@@ -1,9 +1,17 @@
 from operator import itemgetter
 import pytest
-import ccg.lexicon as lex
-from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
-from ccg.lexicon_builder import LexiconBuilder
 from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable
+
+import ccg.lexicon as lex
+from ccg.lexicon_builder import LexiconBuilder
+from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
+
+
+# import for them to show up in coverage
+from ccg.chart import CCGChartParser, DefaultRuleSet
+import ccg.combinator
+import ccg.lexicon
+import ccg.logic
 
 
 # TODO: test var category
@@ -21,6 +29,8 @@ grammar = """
 
     book => N[sg]
     books => N[pl,other]
+
+    read => S\\NP/NP
 """
 
 lexicon = lex.fromstring(grammar)
@@ -85,6 +95,7 @@ class TestLexiconParsing:
             "I => NP",
             "book => N['sg']",
             "books => N['pl','other']",
+            "read => ((S\\NP)/NP)",
             "the => (NP['sg']/N['sg']) | (NP['pl']/N['pl'])"
         ])
 
