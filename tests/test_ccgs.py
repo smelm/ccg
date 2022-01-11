@@ -2,7 +2,7 @@ from operator import itemgetter
 from re import L
 from typing import Tuple
 import pytest
-from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable
+from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable, ApplicationExpression
 from nltk.tree.tree import Tree
 
 import ccg.lexicon as lex
@@ -12,7 +12,6 @@ from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
 
 # import for them to show up in coverage
 from ccg.chart import CCGChartParser, DefaultRuleSet, printCCGDerivation, printCCGTree
-import ccg.combinator
 import ccg.lexicon
 import ccg.logic
 
@@ -41,7 +40,8 @@ lexicon = lex.fromstring(grammar)
 grammar_with_semantics = "\n".join([
         ":- S,N,NP",
         "book => N {book}",
-        "the => NP\\N {\\x.x}"
+        "the => NP\\N {\\x.x}",
+        "read => S/NP {\\x.read(x)}"
     ])
 
 lexicon_with_semantics = lex.fromstring(grammar_with_semantics, include_semantics=True)
@@ -115,6 +115,7 @@ class TestLexiconParsing:
     def test_semantics_are_printed_right(self):
         assert str(lexicon_with_semantics) == "\n".join([
             "book => N {book}",
+            "read => (S/NP) {\\x.read(x)}",
             "the => (NP\\N) {\\x.x}"])
 
 
@@ -175,7 +176,17 @@ lexicon_from_builder_with_semantics = LexiconBuilder()\
                                                         PrimitiveCategory("N"),
                                                         Direction("\\", [])), 
                                                     LambdaExpression(Variable("x"), IndividualVariableExpression(Variable("x"))))\
-                                        .lexicon 
+                                        .entry("read", FunctionalCategory(
+                                                        PrimitiveCategory("S"), 
+                                                        PrimitiveCategory("NP"), 
+                                                        Direction("/", [])),
+                                                    LambdaExpression(
+                                                        Variable("x"), 
+                                                        ApplicationExpression(
+                                                            ConstantExpression(Variable("read")), 
+                                                            IndividualVariableExpression(Variable("x"))))
+                                                    )\
+                                        .lexicon
 
 class TestLexiconBuilder:
     def test_can_declare_primities(self):
@@ -185,6 +196,7 @@ class TestLexiconBuilder:
     def test_can_declare_entries(self):
         for ident in ["the", "book", "books"]:
             assert category_equals(lexicon_from_builder._entries[ident][0], lexicon._entries[ident][0])
+
 
     def test_families_are_resolved_for_entries(self):
         with pytest.raises(AssertionError):
@@ -199,6 +211,7 @@ class TestLexiconBuilder:
         for ident in lexicon_from_builder._families:
             assert category_equals(lexicon_from_builder._families[ident][0], 
                                     lexicon._families[ident][0])
+
 
     def test_can_declare_entries_with_semantics(self):
         for ident in lexicon_with_semantics._entries.keys():
@@ -315,6 +328,8 @@ class TestChart:
             assert captured == expected
 
 
+    def test_can_parse_sentence_with_semantics(self, capsys):
+        pass
 
 
 # TODO: for now this is for testing, should be moved into __eq__ eventually
@@ -340,6 +355,8 @@ def category_equals(a, b):
                 and category_equals(a.term, b.term))
     elif both_are_instance(a, b, IndividualVariableExpression):
         return a.variable == b.variable
+    elif both_are_instance(a, b, ApplicationExpression):
+        return category_equals(a.function, b.function) and category_equals(a.argument, b.argument)
     elif a is None and b is None:
         return True
     print("could not compare categories", type(a), type(b))
