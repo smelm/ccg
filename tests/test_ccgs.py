@@ -230,7 +230,7 @@ class TestChart:
 
     def setup_method(self):
         self.parser = CCGChartParser(lexicon, DefaultRuleSet)
-
+        self.parser_with_semantics = CCGChartParser(lexicon_with_semantics, DefaultRuleSet)
 
     def test_can_parse_sentences(self, capsys):
         parses = self.parser.parse("I read the book".split(" "))
@@ -329,8 +329,41 @@ class TestChart:
 
 
     def test_can_parse_sentence_with_semantics(self, capsys):
-        pass
+        parses = self.parser_with_semantics.parse(["read", "the", "book"])
 
+        expected_outputs = map("\n".join, [
+            [
+                "read               the         book",
+                " (S/NP) {\\x.read(x)}  (NP/N) {\\x.x}  N {book}",
+                "                     ------------------------->",
+                "                             NP {book}",
+                "---------------------------------------------->",
+                "                S {read(book)}"
+            ],
+            [
+                "read               the         book",
+                " (S/NP) {\\x.read(x)}  (NP/N) {\\x.x}  N {book}",
+                "------------------------------------>B",
+                "         (S/N) {\\x.read(x)}",
+                "---------------------------------------------->",
+                "                S {read(book)}"
+            ]
+        ])
+
+        for parse, expected in zip(parses, expected_outputs):
+            printCCGDerivation(parse)
+            captured = capsys.readouterr().out.strip()
+
+            assert captured == expected
+    
+
+    def test_semantics_are_parsed_correctly(self):
+        parse = next(self.parser_with_semantics.parse(["read", "the", "book"]))
+
+        semantic = parse.label()[0].semantics()
+        assert str(semantic) == "read(book)"
+        assert isinstance(semantic, ApplicationExpression)
+        
 
 # TODO: for now this is for testing, should be moved into __eq__ eventually
 def category_equals(a, b):
