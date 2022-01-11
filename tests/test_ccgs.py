@@ -40,7 +40,7 @@ lexicon = lex.fromstring(grammar)
 grammar_with_semantics = "\n".join([
         ":- S,N,NP",
         "book => N {book}",
-        "the => NP\\N {\\x.x}",
+        "the => NP/N {\\x.x}",
         "read => S/NP {\\x.read(x)}"
     ])
 
@@ -116,7 +116,7 @@ class TestLexiconParsing:
         assert str(lexicon_with_semantics) == "\n".join([
             "book => N {book}",
             "read => (S/NP) {\\x.read(x)}",
-            "the => (NP\\N) {\\x.x}"])
+            "the => (NP/N) {\\x.x}"])
 
 
     def test_must_include_semantics_if_option_is_set(self):
@@ -174,7 +174,7 @@ lexicon_from_builder_with_semantics = LexiconBuilder()\
                                         .entry("the", FunctionalCategory(
                                                         PrimitiveCategory("NP"),
                                                         PrimitiveCategory("N"),
-                                                        Direction("\\", [])), 
+                                                        Direction("/", [])), 
                                                     LambdaExpression(Variable("x"), IndividualVariableExpression(Variable("x"))))\
                                         .entry("read", FunctionalCategory(
                                                         PrimitiveCategory("S"), 
