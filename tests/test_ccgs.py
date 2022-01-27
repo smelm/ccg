@@ -7,7 +7,7 @@ from nltk.tree.tree import Tree
 
 import ccg.lexicon as lex
 from ccg.lexicon_builder import LexiconBuilder
-from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
+from ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
 
 
 # import for them to show up in coverage
@@ -31,6 +31,8 @@ grammar = """
 
     book => N[sg]
     books => N[pl,other]
+
+    and => var\\.,var/.,var
 
     read => S\\NP/NP
 """
@@ -96,6 +98,7 @@ class TestLexiconParsing:
     def test_str_formatting_of_lexicon(self):
         assert str(lexicon) == "\n".join([
             "I => NP",
+            "and => ((_var0\\.,_var0)/.,_var0)",
             "book => N['sg']",
             "books => N['pl','other']",
             "read => ((S\\NP)/NP)",
@@ -137,6 +140,8 @@ class TestLexiconParsing:
         with pytest.raises(AssertionError):
             lex.matchBrackets("(foo")
 
+    def test_var_keyword_is_parsed_as_variable(self):
+        assert isinstance(lexicon._entries["and"][0].categ().arg(), CCGVar)
 
 
 lexicon_from_builder = LexiconBuilder()\
@@ -355,7 +360,74 @@ class TestChart:
             captured = capsys.readouterr().out.strip()
 
             assert captured == expected
+
+    def test_var_can_match_NP(self, capsys):
+        printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "the", "book"])))
+        expected = "\n".join([
+            "I      read             the           book               and                    the           book",
+            " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']  ((_var0\\.,_var0)/.,_var0)  (NP['sg']/N['sg'])  N['sg']",
+            "                 ----------------------------->",
+            "                           NP['sg']",
+            "                                                                         ----------------------------->",
+            "                                                                                   NP['sg']",
+            "                                              -------------------------------------------------------->",
+            "                                                               (NP['sg']\\.,NP['sg'])",
+            "                 -------------------------------------------------------------------------------------<",
+            "                                                       NP['sg']",
+            "    -------------------------------------------------------------------------------------------------->",
+            "                                                  (S\\NP)",
+            "------------------------------------------------------------------------------------------------------<",
+            "                                                  S"
+        ])
+
+        assert expected == capsys.readouterr().out.strip()
+
     
+    def test_var_can_match_N(self, capsys):
+        printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "book"])))
+        expected = "\n".join([
+            "I      read             the           book               and              book",
+            " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']  ((_var0\\.,_var0)/.,_var0)  N['sg']",
+            "                                              ------------------------------------>",
+            "                                                      (N['sg']\\.,N['sg'])",
+            "                                     ---------------------------------------------<",
+            "                                                        N['sg']",
+            "                 ----------------------------------------------------------------->",
+            "                                             NP['sg']",
+            "    ------------------------------------------------------------------------------>",
+            "                                        (S\\NP)",
+            "----------------------------------------------------------------------------------<",
+            "                                        S"
+        ])
+
+        assert expected == capsys.readouterr().out.strip()
+
+    def test_var_can_match_S(self, capsys):
+        print()
+        printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "I", "read", "the", "book"])))
+        expected = "\n".join([
+            "I      read             the           book               and             I      read             the           book",
+            " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']  ((_var0\\.,_var0)/.,_var0)  NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
+            "                 ----------------------------->",
+            "                           NP['sg']",
+            "    ------------------------------------------>",
+            "                      (S\\NP)",
+            "----------------------------------------------<",
+            "                      S",
+            "                                                                                          ----------------------------->",
+            "                                                                                                    NP['sg']",
+            "                                                                             ------------------------------------------>",
+            "                                                                                               (S\\NP)",
+            "                                                                         ----------------------------------------------<",
+            "                                                                                               S",
+            "                                              ------------------------------------------------------------------------->",
+            "                                                                               (S\\.,S)",
+            "-----------------------------------------------------------------------------------------------------------------------<",
+            "                                                           S",
+        ])
+
+        assert expected == capsys.readouterr().out.strip()
+
 
     def test_semantics_are_parsed_correctly(self):
         parse = next(self.parser_with_semantics.parse(["read", "the", "book"]))
