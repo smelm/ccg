@@ -1,6 +1,7 @@
 from argparse import ArgumentError
 from nis import cat
 from typing import Any, List
+
 from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
 from ccg.lexicon import CCGLexicon, Token
 from collections import defaultdict
@@ -29,6 +30,11 @@ class PrimitiveCategoryBuilder:
 def primitive_categories(*names):
     return [PrimitiveCategoryBuilder(name) for name in names]
 
+def unwrap_builder(cat):
+    if isinstance(cat, PrimitiveCategoryBuilder):
+        return cat.category
+    else:
+        return cat
 
 class LexiconBuilder:
     def __init__(self):
@@ -47,6 +53,8 @@ class LexiconBuilder:
 
 
     def entry(self, ident, category, semantics=None):
+        category = unwrap_builder(category)
+
         if isinstance(category, PrimitiveCategory) and category.categ() in self.lexicon._families.keys():
             category = self.lexicon._families[category.categ()][0]
 
@@ -56,6 +64,8 @@ class LexiconBuilder:
 
 
     def family(self, ident, category):
+        category = unwrap_builder(category)
+        
         self.lexicon._families[ident] = (category, None)
         return self
 

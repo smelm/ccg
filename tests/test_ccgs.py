@@ -149,13 +149,13 @@ lexicon_from_builder = LexiconBuilder()\
                         .add_start(S) \
                         .add_primitive_categories(NP, N)\
                         .family("Det", NP.function(N, Direction("/", []))) \
-                        .family("Pro", PrimitiveCategory("NP"))\
+                        .family("Pro", NP)\
                         .family("IntransV", S.function(NP, Direction("\\", [])))\
                         .entry("the", NP.restrictions("sg").function(N.restrictions("sg"), Direction("/",[])))\
                         .entry("the", NP.restrictions("pl").function(N.restrictions("pl"), Direction("/", [])))\
                         .entry("I", PrimitiveCategory("Pro"))\
-                        .entry("book", PrimitiveCategory("N", ["sg"]))\
-                        .entry("books", PrimitiveCategory("N", ["pl", "other"]))\
+                        .entry("book", N.restrictions("sg"))\
+                        .entry("books", N.restrictions("pl", "other"))\
                         .make_lexicon()
 
 lexicon_from_builder_with_semantics = LexiconBuilder()\
