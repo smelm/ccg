@@ -151,14 +151,8 @@ lexicon_from_builder = LexiconBuilder()\
                         .family("Det", NP.function(N, Direction("/", []))) \
                         .family("Pro", PrimitiveCategory("NP"))\
                         .family("IntransV", S.function(NP, Direction("\\", [])))\
-                        .entry("the", FunctionalCategory(
-                                        PrimitiveCategory("NP", ["sg"]), 
-                                        PrimitiveCategory("N", ["sg"]), 
-                                        Direction("/",[])))\
-                        .entry("the", FunctionalCategory(
-                                        PrimitiveCategory("NP", ["pl"]), 
-                                        PrimitiveCategory("N", ["pl"]), 
-                                        Direction("/", [])))\
+                        .entry("the", NP.restrictions("sg").function(N.restrictions("sg"), Direction("/",[])))\
+                        .entry("the", NP.restrictions("pl").function(N.restrictions("pl"), Direction("/", [])))\
                         .entry("I", PrimitiveCategory("Pro"))\
                         .entry("book", PrimitiveCategory("N", ["sg"]))\
                         .entry("books", PrimitiveCategory("N", ["pl", "other"]))\
@@ -182,9 +176,6 @@ lexicon_from_builder_with_semantics = LexiconBuilder()\
 class TestLexiconBuilder:
     def test_can_declare_primities(self):
         assert lexicon_from_builder._primitives == lexicon._primitives
-        print(type(lexicon_from_builder._start.categ()))
-        print(type(lexicon._start.categ()))
-
         assert category_equals(lexicon_from_builder._start.categ(), lexicon._start.categ())
 
     def test_can_declare_entries(self):
@@ -450,5 +441,4 @@ def category_equals(a, b):
         return category_equals(a.function, b.function) and category_equals(a.argument, b.argument)
     elif a is None and b is None:
         return True
-    print("could not compare categories", type(a), type(b))
     return a == b

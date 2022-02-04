@@ -20,6 +20,11 @@ class PrimitiveCategoryBuilder:
     def function(self, argument: CategoryBuilder, direction: Direction):
         return FunctionalCategory(self.category, argument.category, direction)
 
+    def restrictions(self, *restrs):
+        if not self.category._restrs:
+            self.category._restrs = []
+        self.category._restrs += restrs
+        return self
 
 def primitive_categories(*names):
     return [PrimitiveCategoryBuilder(name) for name in names]
