@@ -158,7 +158,6 @@ lexicon_from_builder = lb.entries({
                             "book": N["sg"],
                             "books": N["pl", "other"]     
                         }) \
-                        .make_lexicon()
 
 lb = LexiconBuilder()
 S, NP, N = lb.primitive_categories("S", "NP", "N")
@@ -172,7 +171,7 @@ lexicon_from_builder_with_semantics = lb.entries_with_semantic({
                                                         ApplicationExpression(
                                                             ConstantExpression(Variable("read")), 
                                                             IndividualVariableExpression(Variable("x")))))
-                                    }).make_lexicon()
+                                    })
 
 class TestLexiconBuilder:
     def test_can_declare_primities(self):

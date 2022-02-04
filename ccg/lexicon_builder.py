@@ -64,45 +64,37 @@ class LexiconBuilder:
         self.lexicon = CCGLexicon(None, [], dict(), defaultdict(list))
         self.start = None
 
-    def primitive(self, primitive):   
-        print("adding primitive", primitive) 
-        if self.start is None:
-            self.lexicon.start = primitive
-            self.start
-            self.lexicon._start = PrimitiveCategory(primitive)
-        
-        self.lexicon._primitives.append(primitive)
-        return self
-
+    def _resolve_family(self, category):
+        if isinstance(category, PrimitiveCategory) and category.categ() in self.lexicon._families.keys():
+            return self.lexicon._families[category.categ()][0]
+        else:
+            return category
 
     def entry(self, ident, category, semantics=None):
         category = unwrap_builder(category)
-
-        if isinstance(category, PrimitiveCategory) and category.categ() in self.lexicon._families.keys():
-            category = self.lexicon._families[category.categ()][0]
-
+        category = self._resolve_family(category)
+        
         self.lexicon._entries[ident].append(Token(ident, category, semantics))
-
-        return self
     
+
     def entries(self, entries):
         for ident, category in entries.items():
             self.entry(ident, category)
+        
+        return self.lexicon
 
-        return self
 
     def entries_with_semantic(self, entries: Dict):
         for ident, (category, semantics) in entries.items():
             self.entry(ident, category, semantics)
 
-        return self
+        return self.lexicon
 
 
     def family(self, ident, category):
         category = unwrap_builder(category)
 
         self.lexicon._families[ident] = (category, None)
-        return self
 
 
     def families(self, families: Dict[str, CategoryBuilder]):
@@ -121,19 +113,3 @@ class LexiconBuilder:
         self.lexicon._start = primitive_builders[0].category
 
         return primitive_builders
-
-    def add_start(self, category_builder: PrimitiveCategoryBuilder):
-        """Add the start Symbol (Primitive Category)"""
-        category = category_builder.category
-        category_name = category_builder.category_name()
-
-        if not self.start is None:
-            raise SyntaxError(f"cannot set {category_name} as starting symbol since it is already defined as {self.lexicon.start()}")
-
-        self.lexicon._start = category
-        self.add_primitive_categories(category_builder)
-
-        return self
-
-    def make_lexicon(self):
-        return self.lexicon
