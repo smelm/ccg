@@ -39,6 +39,11 @@ class PrimitiveCategoryBuilder:
         self.category._restrs += restrs
         return self
 
+    def __getitem__(self, restrs):
+        self.restrictions(*restrs)
+        return self
+
+
 def primitive_categories(*names):
     return [PrimitiveCategoryBuilder(name) for name in names]
 

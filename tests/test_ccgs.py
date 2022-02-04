@@ -151,11 +151,11 @@ lexicon_from_builder = LexiconBuilder()\
                         .family("Det", NP << N) \
                         .family("Pro", NP)\
                         .family("IntransV", S >> NP) \
-                        .entry("the", NP.restrictions("sg") << N.restrictions("sg"))\
-                        .entry("the", NP.restrictions("pl") << N.restrictions("pl"))\
+                        .entry("the", NP["sg"] << N["sg"])\
+                        .entry("the", NP["pl"] << N["pl"])\
                         .entry("I", PrimitiveCategory("Pro"))\
-                        .entry("book", N.restrictions("sg"))\
-                        .entry("books", N.restrictions("pl", "other"))\
+                        .entry("book", N["sg"])\
+                        .entry("books", N["pl", "other"])\
                         .make_lexicon()
 
 lexicon_from_builder_with_semantics = LexiconBuilder()\
