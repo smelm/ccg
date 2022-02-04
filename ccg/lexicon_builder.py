@@ -1,13 +1,19 @@
 from argparse import ArgumentError
 from nis import cat
-from typing import List
-from ccg.api import PrimitiveCategory
+from typing import Any, List
+from ccg.api import Direction, PrimitiveCategory
 from ccg.lexicon import CCGLexicon, Token
 from collections import defaultdict
 
+# TODO: this type alias should be a base class somewhere
+Category = Any
+
 class PrimitiveCategoryBuilder:
     def __init__(self, category_name):
-        self.category = category_name
+        self.category = PrimitiveCategory(category_name)
+
+    def category_name(self):
+        return self.category.categ()
 
 
 def primitive_categories(*names):
@@ -45,7 +51,7 @@ class LexiconBuilder:
 
 
     def add_primitive_categories(self, *categories: List[PrimitiveCategoryBuilder]):
-        categories = [c.category for c in categories]
+        categories = [c.category_name() for c in categories]
         self.lexicon._primitives.extend(categories)
 
         return self
@@ -54,11 +60,12 @@ class LexiconBuilder:
     def add_start(self, category_builder: PrimitiveCategoryBuilder):
         """Add the start Symbol (Primitive Category)"""
         category = category_builder.category
+        category_name = category_builder.category_name()
 
         if not self.start is None:
-            raise SyntaxError(f"cannot set {category} as starting symbol since it is already defined as {self.lexicon.start()}")
+            raise SyntaxError(f"cannot set {category_name} as starting symbol since it is already defined as {self.lexicon.start()}")
 
-        self.lexicon._start = PrimitiveCategory(category)
+        self.lexicon._start = category
         self.add_primitive_categories(category_builder)
 
         return self
