@@ -143,7 +143,6 @@ class TestLexiconParsing:
     def test_var_keyword_is_parsed_as_variable(self):
         assert isinstance(lexicon._entries["and"][0].categ().arg(), CCGVar)
 
-
 lexicon_from_builder = LexiconBuilder()\
                         .primitive("S")\
                         .primitive("NP")\
@@ -204,15 +203,13 @@ class TestLexiconBuilder:
 
 
     def test_families_are_resolved_for_entries(self):
-        with pytest.raises(AssertionError):
-            assert category_equals(lexicon_from_builder._entries["I"][0], lexicon._entries["I"][0])
-            
-        pytest.xfail("TODO: resolve families for entries")
-        
+        assert lexicon._entries["I"][0].categ().categ() == "NP"
+        assert lexicon_from_builder._entries["I"][0].categ().categ() == "NP"
+
 
     def test_can_declare_families(self):
         assert lexicon_from_builder._families.keys() == lexicon._families.keys()
-        
+
         for ident in lexicon_from_builder._families:
             assert category_equals(lexicon_from_builder._families[ident][0], 
                                     lexicon._families[ident][0])
@@ -403,7 +400,6 @@ class TestChart:
         assert expected == capsys.readouterr().out.strip()
 
     def test_var_can_match_S(self, capsys):
-        print()
         printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "I", "read", "the", "book"])))
         expected = "\n".join([
             "I      read             the           book               and             I      read             the           book",
