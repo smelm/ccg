@@ -6,7 +6,7 @@ from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, Lam
 from nltk.tree.tree import Tree
 
 import ccg.lexicon as lex
-from ccg.lexicon_builder import LexiconBuilder
+from ccg.lexicon_builder import LexiconBuilder, primitive_categories
 from ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
 
 
@@ -143,10 +143,11 @@ class TestLexiconParsing:
     def test_var_keyword_is_parsed_as_variable(self):
         assert isinstance(lexicon._entries["and"][0].categ().arg(), CCGVar)
 
+S, NP, N = primitive_categories("S", "NP", "N")
+
 lexicon_from_builder = LexiconBuilder()\
-                        .primitive("S")\
-                        .primitive("NP")\
-                        .primitive("N")\
+                        .add_start(S) \
+                        .add_primitive_categories(NP, N)\
                         .family("Det", FunctionalCategory(
                                         PrimitiveCategory("NP"), 
                                         PrimitiveCategory("N"),
@@ -168,12 +169,11 @@ lexicon_from_builder = LexiconBuilder()\
                         .entry("I", PrimitiveCategory("Pro"))\
                         .entry("book", PrimitiveCategory("N", ["sg"]))\
                         .entry("books", PrimitiveCategory("N", ["pl", "other"]))\
-                        .lexicon
+                        .make_lexicon()
 
 lexicon_from_builder_with_semantics = LexiconBuilder()\
-                                        .primitive("S")\
-                                        .primitive("N")\
-                                        .primitive("NP")\
+                                        .add_start(S) \
+                                        .add_primitive_categories(NP, N)\
                                         .entry("book", PrimitiveCategory("N"), ConstantExpression(Variable("book")))\
                                         .entry("the", FunctionalCategory(
                                                         PrimitiveCategory("NP"),
@@ -190,12 +190,15 @@ lexicon_from_builder_with_semantics = LexiconBuilder()\
                                                             ConstantExpression(Variable("read")), 
                                                             IndividualVariableExpression(Variable("x"))))
                                                     )\
-                                        .lexicon
+                                        .make_lexicon()
 
 class TestLexiconBuilder:
     def test_can_declare_primities(self):
         assert lexicon_from_builder._primitives == lexicon._primitives
-        assert lexicon_from_builder._start == lexicon._start
+        print(type(lexicon_from_builder._start.categ()))
+        print(type(lexicon._start.categ()))
+
+        assert category_equals(lexicon_from_builder._start.categ(), lexicon._start.categ())
 
     def test_can_declare_entries(self):
         for ident in ["the", "book", "books"]:
@@ -461,4 +464,4 @@ def category_equals(a, b):
     elif a is None and b is None:
         return True
     print("could not compare categories", type(a), type(b))
-    return False
+    return a == b
