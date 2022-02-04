@@ -188,9 +188,10 @@ def augParseCategory(line, primitives, families, var=None):
     """
     (cat_string, rest) = nextCategory(line)
 
+    # if cat string is surounded with parenthesis
+    # remove them and try again
     if cat_string.startswith("("):
         (res, var) = augParseCategory(cat_string[1:-1], primitives, families, var)
-
     else:
         (res, var) = parsePrimitiveCategory(
             PRIM_RE.match(cat_string).groups(), primitives, families, var
@@ -261,49 +262,3 @@ def fromstring(lex_str: str, include_semantics: bool=False):
                 # ie, which => (N\N)/(S/NP)
                 entries[ident].append(Token(ident, cat, semantics))
     return CCGLexicon(primitives[0], primitives, families, entries)
-
-
-openccg_tinytiny = fromstring(
-    """
-    # Rather minimal lexicon based on the openccg `tinytiny' grammar.
-    # Only incorporates a subset of the morphological subcategories, however.
-    :- S,NP,N                    # Primitive categories
-    Det :: NP/N                  # Determiners
-    Pro :: NP
-    IntransVsg :: S\\NP[sg]    # Tensed intransitive verbs (singular)
-    IntransVpl :: S\\NP[pl]    # Plural
-    TransVsg :: S\\NP[sg]/NP   # Tensed transitive verbs (singular)
-    TransVpl :: S\\NP[pl]/NP   # Plural
-
-    the => NP[sg]/N[sg]
-    the => NP[pl]/N[pl]
-
-    I => Pro
-    me => Pro
-    we => Pro
-    us => Pro
-
-    book => N[sg]
-    books => N[pl]
-
-    peach => N[sg]
-    peaches => N[pl]
-
-    policeman => N[sg]
-    policemen => N[pl]
-
-    boy => N[sg]
-    boys => N[pl]
-
-    sleep => IntransVsg
-    sleep => IntransVpl
-
-    eat => IntransVpl
-    eat => TransVpl
-    eats => IntransVsg
-    eats => TransVsg
-
-    see => TransVpl
-    sees => TransVsg
-    """
-)
