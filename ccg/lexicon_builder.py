@@ -1,13 +1,12 @@
-from argparse import ArgumentError
 import enum
-from nis import cat
-from typing import Any, List
+from typing import Any, Dict
 
 from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
 from ccg.lexicon import CCGLexicon, Token
 from collections import defaultdict
 
 # TODO: this type alias should be a base class somewhere
+
 CategoryBuilder = Any
 
 # TODO: function builder (nested)
@@ -44,11 +43,18 @@ class PrimitiveCategoryBuilder:
         return self
 
 
-def primitive_categories(*names):
-    return [PrimitiveCategoryBuilder(name) for name in names]
+
+
+class FamilyBuilder:
+    def __init__(self, name, category):
+        self.name = name
+        self.category = unwrap_builder(category)
+
 
 def unwrap_builder(cat):
     if isinstance(cat, PrimitiveCategoryBuilder):
+        return cat.category
+    elif isinstance(cat, FamilyBuilder):
         return cat.category
     else:
         return cat
@@ -85,6 +91,13 @@ class LexiconBuilder:
 
         return self
 
+    def entries_with_semantic(self, entries: Dict):
+        for ident, (category, semantics) in entries.items():
+            self.entry(ident, category, semantics)
+
+        return self
+
+
     def family(self, ident, category):
         category = unwrap_builder(category)
 
@@ -92,21 +105,22 @@ class LexiconBuilder:
         return self
 
 
-    def families(self, families):
+    def families(self, families: Dict[str, CategoryBuilder]):
+        family_builders = []
+        for identifier, category in families.items():
+            family_builders.append(FamilyBuilder(identifier, category))
+            self.family(identifier, unwrap_builder(category))
 
-        for ident, category in families.items():
-            self.family(ident, category)
-
-        return self
+        return family_builders
 
 
-
-    def add_primitive_categories(self, *categories: List[PrimitiveCategoryBuilder]):
-        categories = [c.category_name() for c in categories]
+    def primitive_categories(self, *names):
+        primitive_builders = [PrimitiveCategoryBuilder(name) for name in names]
+        categories = [c.category_name() for c in primitive_builders]
         self.lexicon._primitives.extend(categories)
+        self.lexicon._start = primitive_builders[0].category
 
-        return self
-
+        return primitive_builders
 
     def add_start(self, category_builder: PrimitiveCategoryBuilder):
         """Add the start Symbol (Primitive Category)"""

@@ -6,7 +6,7 @@ from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, Lam
 from nltk.tree.tree import Tree
 
 import ccg.lexicon as lex
-from ccg.lexicon_builder import LexiconBuilder, primitive_categories
+from ccg.lexicon_builder import LexiconBuilder
 from ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
 
 
@@ -143,39 +143,36 @@ class TestLexiconParsing:
     def test_var_keyword_is_parsed_as_variable(self):
         assert isinstance(lexicon._entries["and"][0].categ().arg(), CCGVar)
 
-S, NP, N = primitive_categories("S", "NP", "N")
-
-lexicon_from_builder = LexiconBuilder()\
-                        .add_start(S) \
-                        .add_primitive_categories(NP, N)\
-                        .families({
+lb = LexiconBuilder()
+S, NP, N = lb.primitive_categories("S", "NP", "N")
+Det, Pro, IntransV = lb.families({
                             "Det": NP << N,
                             "Pro": NP,
                             "IntransV": S >> NP
-                        }) \
-                        .entries({
+                    })
+
+lexicon_from_builder = lb.entries({
                             "the": NP["sg"] << N["sg"],
                             "the": NP["pl"] << N["pl"],
-                            "I": PrimitiveCategory("Pro"),
+                            "I": Pro,
                             "book": N["sg"],
                             "books": N["pl", "other"]     
                         }) \
                         .make_lexicon()
 
-lexicon_from_builder_with_semantics = LexiconBuilder()\
-                                        .add_start(S) \
-                                        .add_primitive_categories(NP, N)\
-                                        .entry("book", PrimitiveCategory("N"), ConstantExpression(Variable("book")))\
-                                        .entry("the", NP << N, 
-                                                    LambdaExpression(Variable("x"), IndividualVariableExpression(Variable("x"))))\
-                                        .entry("read", S << NP,
+lb = LexiconBuilder()
+S, NP, N = lb.primitive_categories("S", "NP", "N")
+
+lexicon_from_builder_with_semantics = lb.entries_with_semantic({
+                                        "book": (PrimitiveCategory("N"), ConstantExpression(Variable("book"))),
+                                        "the": (NP << N, LambdaExpression(Variable("x"), IndividualVariableExpression(Variable("x")))),
+                                        "read": (S << NP,
                                                     LambdaExpression(
                                                         Variable("x"), 
                                                         ApplicationExpression(
                                                             ConstantExpression(Variable("read")), 
-                                                            IndividualVariableExpression(Variable("x"))))
-                                                    )\
-                                        .make_lexicon()
+                                                            IndividualVariableExpression(Variable("x")))))
+                                    }).make_lexicon()
 
 class TestLexiconBuilder:
     def test_can_declare_primities(self):
