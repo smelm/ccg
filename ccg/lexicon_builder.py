@@ -39,7 +39,7 @@ class PrimitiveCategoryBuilder:
         return self
 
     def __getitem__(self, restrs):
-        self.restrictions(*restrs)
+        self.restrictions(restrs)
         return self
 
 
