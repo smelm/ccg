@@ -1,4 +1,5 @@
 from argparse import ArgumentError
+import enum
 from nis import cat
 from typing import Any, List
 
@@ -11,6 +12,11 @@ CategoryBuilder = Any
 
 # TODO: function builder (nested)
 
+class Direction(enum.Enum):
+    LEFT = Direction("/", [])
+    RIGHT = Direction("\\", [])
+
+
 class PrimitiveCategoryBuilder:
     def __init__(self, category_name):
         self.category = PrimitiveCategory(category_name)
@@ -20,6 +26,12 @@ class PrimitiveCategoryBuilder:
 
     def function(self, argument: CategoryBuilder, direction: Direction):
         return FunctionalCategory(self.category, argument.category, direction)
+    
+    def __rshift__(self, other):
+        return self.function(other, Direction.RIGHT.value)
+
+    def __lshift__(self, other):
+        return self.function(other, Direction.LEFT.value)
 
     def restrictions(self, *restrs):
         if not self.category._restrs:
@@ -65,7 +77,7 @@ class LexiconBuilder:
 
     def family(self, ident, category):
         category = unwrap_builder(category)
-        
+
         self.lexicon._families[ident] = (category, None)
         return self
 

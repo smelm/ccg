@@ -148,11 +148,11 @@ S, NP, N = primitive_categories("S", "NP", "N")
 lexicon_from_builder = LexiconBuilder()\
                         .add_start(S) \
                         .add_primitive_categories(NP, N)\
-                        .family("Det", NP.function(N, Direction("/", []))) \
+                        .family("Det", NP << N) \
                         .family("Pro", NP)\
-                        .family("IntransV", S.function(NP, Direction("\\", [])))\
-                        .entry("the", NP.restrictions("sg").function(N.restrictions("sg"), Direction("/",[])))\
-                        .entry("the", NP.restrictions("pl").function(N.restrictions("pl"), Direction("/", [])))\
+                        .family("IntransV", S >> NP) \
+                        .entry("the", NP.restrictions("sg") << N.restrictions("sg"))\
+                        .entry("the", NP.restrictions("pl") << N.restrictions("pl"))\
                         .entry("I", PrimitiveCategory("Pro"))\
                         .entry("book", N.restrictions("sg"))\
                         .entry("books", N.restrictions("pl", "other"))\
@@ -162,9 +162,9 @@ lexicon_from_builder_with_semantics = LexiconBuilder()\
                                         .add_start(S) \
                                         .add_primitive_categories(NP, N)\
                                         .entry("book", PrimitiveCategory("N"), ConstantExpression(Variable("book")))\
-                                        .entry("the", NP.function(N, Direction("/", [])), 
+                                        .entry("the", NP << N, 
                                                     LambdaExpression(Variable("x"), IndividualVariableExpression(Variable("x"))))\
-                                        .entry("read", S.function(NP, Direction("/", [])),
+                                        .entry("read", S << NP,
                                                     LambdaExpression(
                                                         Variable("x"), 
                                                         ApplicationExpression(
