@@ -148,16 +148,9 @@ S, NP, N = primitive_categories("S", "NP", "N")
 lexicon_from_builder = LexiconBuilder()\
                         .add_start(S) \
                         .add_primitive_categories(NP, N)\
-                        .family("Det", FunctionalCategory(
-                                        PrimitiveCategory("NP"), 
-                                        PrimitiveCategory("N"),
-                                        Direction("/", [])))\
+                        .family("Det", NP.function(N, Direction("/", []))) \
                         .family("Pro", PrimitiveCategory("NP"))\
-                        .family("IntransV", FunctionalCategory(
-                                                PrimitiveCategory("S"),
-                                                PrimitiveCategory("NP"),
-                                                Direction("\\", [])
-                                ))\
+                        .family("IntransV", S.function(NP, Direction("\\", [])))\
                         .entry("the", FunctionalCategory(
                                         PrimitiveCategory("NP", ["sg"]), 
                                         PrimitiveCategory("N", ["sg"]), 
@@ -175,15 +168,9 @@ lexicon_from_builder_with_semantics = LexiconBuilder()\
                                         .add_start(S) \
                                         .add_primitive_categories(NP, N)\
                                         .entry("book", PrimitiveCategory("N"), ConstantExpression(Variable("book")))\
-                                        .entry("the", FunctionalCategory(
-                                                        PrimitiveCategory("NP"),
-                                                        PrimitiveCategory("N"),
-                                                        Direction("/", [])), 
+                                        .entry("the", NP.function(N, Direction("/", [])), 
                                                     LambdaExpression(Variable("x"), IndividualVariableExpression(Variable("x"))))\
-                                        .entry("read", FunctionalCategory(
-                                                        PrimitiveCategory("S"), 
-                                                        PrimitiveCategory("NP"), 
-                                                        Direction("/", [])),
+                                        .entry("read", S.function(NP, Direction("/", [])),
                                                     LambdaExpression(
                                                         Variable("x"), 
                                                         ApplicationExpression(

@@ -1,12 +1,14 @@
 from argparse import ArgumentError
 from nis import cat
 from typing import Any, List
-from ccg.api import Direction, PrimitiveCategory
+from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
 from ccg.lexicon import CCGLexicon, Token
 from collections import defaultdict
 
 # TODO: this type alias should be a base class somewhere
-Category = Any
+CategoryBuilder = Any
+
+# TODO: function builder (nested)
 
 class PrimitiveCategoryBuilder:
     def __init__(self, category_name):
@@ -14,6 +16,9 @@ class PrimitiveCategoryBuilder:
 
     def category_name(self):
         return self.category.categ()
+
+    def function(self, argument: CategoryBuilder, direction: Direction):
+        return FunctionalCategory(self.category, argument.category, direction)
 
 
 def primitive_categories(*names):
