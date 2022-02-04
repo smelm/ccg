@@ -78,13 +78,27 @@ class LexiconBuilder:
         self.lexicon._entries[ident].append(Token(ident, category, semantics))
 
         return self
+    
+    def entries(self, entries):
+        for ident, category in entries.items():
+            self.entry(ident, category)
 
+        return self
 
     def family(self, ident, category):
         category = unwrap_builder(category)
 
         self.lexicon._families[ident] = (category, None)
         return self
+
+
+    def families(self, families):
+
+        for ident, category in families.items():
+            self.family(ident, category)
+
+        return self
+
 
 
     def add_primitive_categories(self, *categories: List[PrimitiveCategoryBuilder]):

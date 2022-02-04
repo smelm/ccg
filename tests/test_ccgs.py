@@ -148,14 +148,18 @@ S, NP, N = primitive_categories("S", "NP", "N")
 lexicon_from_builder = LexiconBuilder()\
                         .add_start(S) \
                         .add_primitive_categories(NP, N)\
-                        .family("Det", NP << N) \
-                        .family("Pro", NP)\
-                        .family("IntransV", S >> NP) \
-                        .entry("the", NP["sg"] << N["sg"])\
-                        .entry("the", NP["pl"] << N["pl"])\
-                        .entry("I", PrimitiveCategory("Pro"))\
-                        .entry("book", N["sg"])\
-                        .entry("books", N["pl", "other"])\
+                        .families({
+                            "Det": NP << N,
+                            "Pro": NP,
+                            "IntransV": S >> NP
+                        }) \
+                        .entries({
+                            "the": NP["sg"] << N["sg"],
+                            "the": NP["pl"] << N["pl"],
+                            "I": PrimitiveCategory("Pro"),
+                            "book": N["sg"],
+                            "books": N["pl", "other"]     
+                        }) \
                         .make_lexicon()
 
 lexicon_from_builder_with_semantics = LexiconBuilder()\
