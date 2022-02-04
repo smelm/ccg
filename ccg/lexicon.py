@@ -80,7 +80,7 @@ class CCGLexicon:
     * `entries`: A mapping of words to possible categories
     """
 
-    def __init__(self, start: str, primitives: List[PrimitiveCategory], families: Set[any], entries: Dict[str, any]):
+    def __init__(self, start: str, primitives: List[str], families: Set[any], entries: Dict[str, any]):
         self._start = PrimitiveCategory(start)
         self._primitives = primitives
         self._families = families
