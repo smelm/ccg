@@ -3,7 +3,6 @@ from re import L
 from typing import Tuple
 import pytest
 from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable, ApplicationExpression
-from nltk.tree.tree import Tree
 
 import ccg.lexicon as lex
 from ccg.lexicon_builder import LexiconBuilder
@@ -12,7 +11,6 @@ from ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
 
 # import for them to show up in coverage
 from ccg.chart import CCGChartParser, DefaultRuleSet, printCCGDerivation, printCCGTree
-import ccg.lexicon
 import ccg.logic
 
 
@@ -156,8 +154,9 @@ lexicon_from_builder = lb.entries({
                             "the": NP["pl"] << N["pl"],
                             "I": Pro,
                             "book": N["sg"],
-                            "books": N["pl", "other"]     
-                        }) \
+                            "books": N["pl", "other"],
+                            "read": S >> Pro << NP   
+                        })
 
 lb = LexiconBuilder()
 S, NP, N = lb.primitive_categories("S", "NP", "N")
@@ -207,6 +206,16 @@ class TestLexiconBuilder:
         for ident in lexicon_with_semantics._families.keys():
             assert category_equals(lexicon_from_builder_with_semantics._families[ident],
                                         lexicon_with_semantics._families[ident])
+
+    def test_can_declare_multi_argument_functions(self):
+        read = lexicon_from_builder._entries["read"][0].categ()
+        assert category_equals(read, FunctionalCategory(
+                                        FunctionalCategory(
+                                            PrimitiveCategory("S"),
+                                            PrimitiveCategory("NP"),
+                                            Direction("\\", [])), 
+                                        PrimitiveCategory("NP"), 
+                                        Direction("/", [])))
 
 
 class TestChart:

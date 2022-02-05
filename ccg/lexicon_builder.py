@@ -15,22 +15,23 @@ class Direction(enum.Enum):
     LEFT = Direction("/", [])
     RIGHT = Direction("\\", [])
 
-
-class PrimitiveCategoryBuilder:
-    def __init__(self, category_name):
-        self.category = PrimitiveCategory(category_name)
-
-    def category_name(self):
-        return self.category.categ()
-
+class Builder:
     def function(self, argument: CategoryBuilder, direction: Direction):
-        return FunctionalCategory(self.category, argument.category, direction)
+        return FunctionBuilder(self.category, argument.category, direction)
     
     def __rshift__(self, other):
         return self.function(other, Direction.RIGHT.value)
 
     def __lshift__(self, other):
         return self.function(other, Direction.LEFT.value)
+
+
+class PrimitiveCategoryBuilder(Builder):
+    def __init__(self, category_name):
+        self.category = PrimitiveCategory(category_name)
+
+    def category_name(self):
+        return self.category.categ()
 
     def restrictions(self, *restrs):
         if not self.category._restrs:
@@ -43,9 +44,12 @@ class PrimitiveCategoryBuilder:
         return self
 
 
+class FunctionBuilder(Builder):
+    def __init__(self, return_category, argument_category, direction):
+        self.category = FunctionalCategory(return_category, argument_category, direction)
 
 
-class FamilyBuilder:
+class FamilyBuilder(Builder):
     def __init__(self, name, category):
         self.name = name
         self.category = unwrap_builder(category)
@@ -55,6 +59,8 @@ def unwrap_builder(cat):
     if isinstance(cat, PrimitiveCategoryBuilder):
         return cat.category
     elif isinstance(cat, FamilyBuilder):
+        return cat.category
+    elif isinstance(cat, FunctionBuilder):
         return cat.category
     else:
         return cat
