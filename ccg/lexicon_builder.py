@@ -27,21 +27,20 @@ class Builder:
 
 
 class PrimitiveCategoryBuilder(Builder):
-    def __init__(self, category_name):
-        self.category = PrimitiveCategory(category_name)
+    def __init__(self, category_name, restrictions=None):
+        self.category = PrimitiveCategory(category_name, restrictions)
 
     def category_name(self):
         return self.category.categ()
 
-    def restrictions(self, *restrs):
-        if not self.category._restrs:
-            self.category._restrs = []
-        self.category._restrs += restrs
-        return self
+
+    def restrictions(self, *restrictions):
+        return PrimitiveCategoryBuilder(self.category_name, self.category.restrs() + list(restrictions))
+
 
     def __getitem__(self, restrs):
-        self.restrictions(restrs)
-        return self
+        return self.restrictions(restrs)
+        
 
 
 class FunctionBuilder(Builder):
