@@ -150,8 +150,10 @@ Det, Pro, IntransV = lb.families({
                     })
 
 lexicon_from_builder = lb.entries({
-                            "the": NP["sg"] << N["sg"],
-                            "the": NP["pl"] << N["pl"],
+                            "the": [
+                                NP["sg"] << N["sg"], 
+                                NP["pl"] << N["pl"]
+                            ],
                             "I": Pro,
                             "book": N["sg"],
                             "books": N["pl", "other"],
@@ -216,6 +218,18 @@ class TestLexiconBuilder:
                                             Direction("\\", [])), 
                                         PrimitiveCategory("NP"), 
                                         Direction("/", [])))
+
+    def test_can_declare_categories_with_restrictions(self):
+        the = lexicon_from_builder._entries["the"]
+        
+        assert str(the[0]) == "(NP['sg']/N['sg'])"
+        assert str(the[1]) == "(NP['pl']/N['pl'])"
+
+        book = lexicon_from_builder._entries["book"][0]
+        assert str(book) == "N['sg']"
+
+        books = lexicon_from_builder._entries["books"][0]
+        assert str(books) == "N[('pl', 'other')]"
 
 
 class TestChart:

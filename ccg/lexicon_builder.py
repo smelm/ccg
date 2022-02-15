@@ -1,5 +1,5 @@
 import enum
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from ccg.api import Direction, FunctionalCategory, PrimitiveCategory
 from ccg.lexicon import CCGLexicon, Token
@@ -76,11 +76,21 @@ class LexiconBuilder:
         else:
             return category
 
-    def entry(self, ident, category, semantics=None):
-        category = unwrap_builder(category)
-        category = self._resolve_family(category)
+    def entry(self, ident, categories, semantics=None):
+        # category can either be a single category or a list
+        # For example:
+        #     the :: NP["sg"]/N["sg"]
+        #     the :: NP["pl"]/N["pl"]
+        # would be passed in as a list
         
-        self.lexicon._entries[ident].append(Token(ident, category, semantics))
+        if not isinstance(categories, List):
+            categories = [categories]
+
+        for category in categories:
+            category = unwrap_builder(category)
+            category = self._resolve_family(category)
+        
+            self.lexicon._entries[ident].append(Token(ident, category, semantics))
     
 
     def entries(self, entries):
