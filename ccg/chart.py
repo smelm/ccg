@@ -259,52 +259,37 @@ DefaultRuleSet = (
 )
 
 
-class CCGChartParser(ParserI):
-    """
-    Chart parser for CCGs.
-    Based largely on the ChartParser class from NLTK.
-    """
+# Implements the CYK algorithm
+def chart_parse(lexicon, tokens: List[str], rules=DefaultRuleSet):
+    tokens = list(tokens)
+    chart = CCGChart(list(tokens))
 
-    def __init__(self, lexicon: CCGLexicon, rules, trace=0):
-        self._lexicon = lexicon
-        self._rules = rules
-        self._trace = trace
+    # Initialize leaf edges.
+    for index in range(chart.num_leaves()):
+        for token in lexicon.categories(chart.leaf(index)):
+            new_edge = CCGLeafEdge(index, token, chart.leaf(index))
+            chart.insert(new_edge, ())
 
-    def lexicon(self):
-        return self._lexicon
+    # Select a span for the new edges
+    for span in range(2, chart.num_leaves() + 1):
+        for start in range(0, chart.num_leaves() - span + 1):
+            # Try all possible pairs of edges that could generate
+            # an edge for that span
+            for part in range(1, span):
+                lstart = start
+                mid = start + part
+                rend = start + span
 
-    # Implements the CYK algorithm
-    def parse(self, tokens: List[str]):
-        tokens = list(tokens)
-        chart = CCGChart(list(tokens))
-        lex = self._lexicon
+                for left in chart.select(span=(lstart, mid)):
+                    for right in chart.select(span=(mid, rend)):
+                        # Generate all possible combinations of the two edges
+                        for rule in rules:
+                            edges_added_by_rule = 0
+                            for newedge in rule.apply(chart, lexicon, left, right):
+                                edges_added_by_rule += 1
 
-        # Initialize leaf edges.
-        for index in range(chart.num_leaves()):
-            for token in lex.categories(chart.leaf(index)):
-                new_edge = CCGLeafEdge(index, token, chart.leaf(index))
-                chart.insert(new_edge, ())
-
-        # Select a span for the new edges
-        for span in range(2, chart.num_leaves() + 1):
-            for start in range(0, chart.num_leaves() - span + 1):
-                # Try all possible pairs of edges that could generate
-                # an edge for that span
-                for part in range(1, span):
-                    lstart = start
-                    mid = start + part
-                    rend = start + span
-
-                    for left in chart.select(span=(lstart, mid)):
-                        for right in chart.select(span=(mid, rend)):
-                            # Generate all possible combinations of the two edges
-                            for rule in self._rules:
-                                edges_added_by_rule = 0
-                                for newedge in rule.apply(chart, lex, left, right):
-                                    edges_added_by_rule += 1
-
-        # Output the resulting parses
-        return chart.parses(lex.start())
+    # Output the resulting parses
+    return chart.parses(lex.start())
 
 
 class CCGChart(Chart):

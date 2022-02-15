@@ -1,6 +1,5 @@
 from operator import itemgetter
 from re import L
-from typing import Tuple
 import pytest
 from nltk.sem.logic import ConstantExpression, IndividualVariableExpression, LambdaExpression, Variable, ApplicationExpression
 
@@ -8,10 +7,7 @@ import ccg.lexicon as lex
 from ccg.lexicon_builder import LexiconBuilder
 from ccg.api import CCGVar, Direction, FunctionalCategory, PrimitiveCategory
 
-
-# import for them to show up in coverage
-from ccg.chart import CCGChartParser, DefaultRuleSet, printCCGDerivation, printCCGTree
-import ccg.logic
+from ccg.chart import DefaultRuleSet, chart_parse, printCCGDerivation
 
 
 # TODO: test var category
@@ -232,14 +228,12 @@ class TestLexiconBuilder:
 
 
 class TestChart:
-
     def setup_method(self):
-        self.parser = CCGChartParser(lexicon, DefaultRuleSet)
-        self.parser_with_semantics = CCGChartParser(lexicon_with_semantics, DefaultRuleSet)
+        self.parse = lambda input: chart_parse(lexicon, input, DefaultRuleSet)
+        self.parse_with_semantics = lambda input: chart_parse(lexicon_with_semantics, input, DefaultRuleSet)
 
     def test_can_parse_sentences(self, capsys):
-        parses = self.parser.parse("I read the book".split(" "))
-
+        parses = self.parse("I read the book".split(" "))
         parses = list(parses)
 
         expected_ouputs = map("\n".join, [
@@ -334,7 +328,7 @@ class TestChart:
 
 
     def test_can_parse_sentence_with_semantics(self, capsys):
-        parses = self.parser_with_semantics.parse(["read", "the", "book"])
+        parses = self.parse_with_semantics(["read", "the", "book"])
 
         expected_outputs = map("\n".join, [
             [
@@ -362,7 +356,7 @@ class TestChart:
             assert captured == expected
 
     def test_var_can_match_NP(self, capsys):
-        printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "the", "book"])))
+        printCCGDerivation(next(self.parse(["I", "read", "the", "book", "and", "the", "book"])))
         expected = "\n".join([
             "I      read             the           book               and                    the           book",
             " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']  ((_var0\\.,_var0)/.,_var0)  (NP['sg']/N['sg'])  N['sg']",
@@ -384,7 +378,7 @@ class TestChart:
 
     
     def test_var_can_match_N(self, capsys):
-        printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "book"])))
+        printCCGDerivation(next(self.parse(["I", "read", "the", "book", "and", "book"])))
         expected = "\n".join([
             "I      read             the           book               and              book",
             " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']  ((_var0\\.,_var0)/.,_var0)  N['sg']",
@@ -403,7 +397,7 @@ class TestChart:
         assert expected == capsys.readouterr().out.strip()
 
     def test_var_can_match_S(self, capsys):
-        printCCGDerivation(next(self.parser.parse(["I", "read", "the", "book", "and", "I", "read", "the", "book"])))
+        printCCGDerivation(next(self.parse(["I", "read", "the", "book", "and", "I", "read", "the", "book"])))
         expected = "\n".join([
             "I      read             the           book               and             I      read             the           book",
             " NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']  ((_var0\\.,_var0)/.,_var0)  NP  ((S\\NP)/NP)  (NP['sg']/N['sg'])  N['sg']",
@@ -429,7 +423,7 @@ class TestChart:
 
 
     def test_semantics_are_parsed_correctly(self):
-        parse = next(self.parser_with_semantics.parse(["read", "the", "book"]))
+        parse = next(self.parse_with_semantics(["read", "the", "book"]))
 
         semantic = parse.label()[0].semantics()
         assert str(semantic) == "read(book)"
