@@ -35,7 +35,7 @@ class PrimitiveCategoryBuilder(Builder):
 
 
     def restrictions(self, *restrictions):
-        return PrimitiveCategoryBuilder(self.category_name, self.category.restrs() + list(restrictions))
+        return PrimitiveCategoryBuilder(self.category_name(), self.category.restrs() + list(restrictions))
 
 
     def __getitem__(self, restrs):
@@ -63,6 +63,7 @@ def unwrap_builder(cat):
         return cat.category
     else:
         return cat
+
 
 class LexiconBuilder:
     def __init__(self):
