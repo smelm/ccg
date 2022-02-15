@@ -20,7 +20,10 @@ class Builder:
         return FunctionBuilder(self.category, argument.category, direction)
     
     def __rshift__(self, other):
-        return self.function(other, Direction.RIGHT.value)
+        # self and other are reversed here
+        # in order to enable the notation like 
+        #       eat :: (NP >> S) << NP
+        return other.function(self, Direction.RIGHT.value)
 
     def __lshift__(self, other):
         return self.function(other, Direction.LEFT.value)

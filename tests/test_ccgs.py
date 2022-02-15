@@ -146,7 +146,7 @@ S, NP, N = lb.primitive_categories("S", "NP", "N")
 Det, Pro, IntransV = lb.families({
                             "Det": NP << N,
                             "Pro": NP,
-                            "IntransV": S >> NP
+                            "IntransV": NP >> S 
                     })
 
 lexicon_from_builder = lb.entries({
@@ -157,7 +157,7 @@ lexicon_from_builder = lb.entries({
                             "I": Pro,
                             "book": N["sg"],
                             "books": N["pl", "other"],
-                            "read": S >> Pro << NP   
+                            "read": (Pro >> S) << NP   
                         })
 
 lb = LexiconBuilder()
@@ -221,7 +221,6 @@ class TestLexiconBuilder:
 
     def test_can_declare_categories_with_restrictions(self):
         the = lexicon_from_builder._entries["the"]
-        
         assert str(the[0]) == "(NP['sg']/N['sg'])"
         assert str(the[1]) == "(NP['pl']/N['pl'])"
 
