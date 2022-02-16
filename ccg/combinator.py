@@ -13,7 +13,7 @@ from abc import ABCMeta, abstractmethod
 from ccg.api import FunctionalCategory
 
 
-class UndirectedBinaryCombinator(metaclass=ABCMeta):
+class BinaryCombinator(metaclass=ABCMeta):
     """
     Abstract class for representing a binary combinator.
     Merely defines functions for checking if the function and argument
@@ -34,24 +34,7 @@ class UndirectedBinaryCombinator(metaclass=ABCMeta):
         pass
 
 
-class DirectedBinaryCombinator(metaclass=ABCMeta):
-    """
-    Wrapper for the undirected binary combinator.
-    It takes left and right categories, and decides which is to be
-    the function, and which the argument.
-    It then decides whether or not they can be combined.
-    """
-
-    @abstractmethod
-    def can_combine(self, left, right):
-        pass
-
-    @abstractmethod
-    def combine(self, left, right):
-        pass
-
-
-class ForwardCombinator(DirectedBinaryCombinator):
+class ForwardCombinator(BinaryCombinator):
     """
     Class representing combinators where the primary functor is on the left.
 
@@ -74,7 +57,7 @@ class ForwardCombinator(DirectedBinaryCombinator):
         return f">{self._combinator}{self._suffix}"
 
 
-class BackwardCombinator(DirectedBinaryCombinator):
+class BackwardCombinator(BinaryCombinator):
     """
     The backward equivalent of the ForwardCombinator class.
     """
@@ -94,7 +77,7 @@ class BackwardCombinator(DirectedBinaryCombinator):
         return f"<{self._combinator}{self._suffix}"
 
 
-class UndirectedFunctionApplication(UndirectedBinaryCombinator):
+class UndirectedFunctionApplication(BinaryCombinator):
     """
     Class representing function application.
     Implements rules of the form:
@@ -134,12 +117,7 @@ def backwardOnly(left, right):
     return right.dir().is_backward()
 
 
-# Application combinator instances
-ForwardApplication = ForwardCombinator(UndirectedFunctionApplication(), forwardOnly)
-BackwardApplication = BackwardCombinator(UndirectedFunctionApplication(), backwardOnly)
-
-
-class UndirectedComposition(UndirectedBinaryCombinator):
+class UndirectedComposition(BinaryCombinator):
     """
     Functional composition (harmonic) combinator.
     Implements rules of the form
@@ -197,15 +175,7 @@ def backwardBxConstraint(left, right):
     return left.arg().is_primitive()
 
 
-# Straight composition combinators
-ForwardComposition = ForwardCombinator(UndirectedComposition(), forwardOnly)
-BackwardComposition = BackwardCombinator(UndirectedComposition(), backwardOnly)
-
-# Backward crossed composition
-BackwardBx = BackwardCombinator(UndirectedComposition(), backwardBxConstraint, suffix="x")
-
-
-class UndirectedSubstitution(UndirectedBinaryCombinator):
+class UndirectedSubstitution(BinaryCombinator):
     r"""
     Substitution (permutation) combinator.
     Implements rules of the form
@@ -252,11 +222,6 @@ def backwardSxConstraint(left, right):
     return right.res().dir().is_backward() and right.arg().is_primitive()
 
 
-# Instances of substitution combinators
-ForwardSubstitution = ForwardCombinator(UndirectedSubstitution(), forwardSConstraint)
-BackwardSx = BackwardCombinator(UndirectedSubstitution(), backwardSxConstraint, "x")
-
-
 # Retrieves the left-most functional category.
 # ie, (N\N)/(S/NP) => N\N
 def innermostFunction(categ):
@@ -265,7 +230,7 @@ def innermostFunction(categ):
     return categ
 
 
-class UndirectedTypeRaise(UndirectedBinaryCombinator):
+class UndirectedTypeRaise(BinaryCombinator):
     """
     Undirected combinator for type raising.
     """
@@ -319,6 +284,21 @@ def backwardTConstraint(left, right):
     arg = innermostFunction(left)
     return arg.dir().is_forward() and arg.res().is_primitive()
 
+
+# Application combinator instances
+ForwardApplication = ForwardCombinator(UndirectedFunctionApplication(), forwardOnly)
+BackwardApplication = BackwardCombinator(UndirectedFunctionApplication(), backwardOnly)
+
+# Instances of substitution combinators
+ForwardSubstitution = ForwardCombinator(UndirectedSubstitution(), forwardSConstraint)
+BackwardSx = BackwardCombinator(UndirectedSubstitution(), backwardSxConstraint, "x")
+
+# Straight composition combinators
+ForwardComposition = ForwardCombinator(UndirectedComposition(), forwardOnly)
+BackwardComposition = BackwardCombinator(UndirectedComposition(), backwardOnly)
+
+# Backward crossed composition
+BackwardBx = BackwardCombinator(UndirectedComposition(), backwardBxConstraint, suffix="x")
 
 # Instances of type-raising combinators
 ForwardT = ForwardCombinator(UndirectedTypeRaise(), forwardTConstraint)
