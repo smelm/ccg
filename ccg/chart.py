@@ -259,9 +259,7 @@ SubstitutionRuleSet = [
 TypeRaiseRuleSet = [ForwardTypeRaiseRule(), BackwardTypeRaiseRule()]
 
 # The standard English rule set.
-DefaultRuleSet = (
-    ApplicationRuleSet + CompositionRuleSet + SubstitutionRuleSet + TypeRaiseRuleSet
-)
+DefaultRuleSet = ApplicationRuleSet + CompositionRuleSet + SubstitutionRuleSet + TypeRaiseRuleSet
 
 
 # Implements the CYK algorithm
@@ -295,6 +293,7 @@ def chart_parse(lexicon, tokens: List[str], rules=DefaultRuleSet):
 
     # Output the resulting parses
     return chart.parses(lex.start())
+
 
 class CCGChart(Chart):
     def __init__(self, tokens: List[str]):
@@ -402,9 +401,7 @@ def printCCGTree(lwidth, tree):
     # Is a leaf node.
     # Don't print anything, but account for the space occupied.
     if not isinstance(tree.label(), tuple):
-        return max(
-            rwidth, 2 + lwidth + len("%s" % tree.label()), 2 + lwidth + len(tree[0])
-        )
+        return max(rwidth, 2 + lwidth + len("%s" % tree.label()), 2 + lwidth + len(tree[0]))
 
     (token, op) = tree.label()
 
@@ -421,50 +418,3 @@ def printCCGTree(lwidth, tree):
     respadlen = (rwidth - lwidth - len(str_res)) // 2 + lwidth
     print(respadlen * " " + str_res)
     return rwidth
-
-
-### Demonstration code
-
-# Construct the lexicon
-lex = fromstring(
-    """
-    :- S, NP, N, VP    # Primitive categories, S is the target primitive
-
-    Det :: NP/N         # Family of words
-    Pro :: NP
-    TV :: VP/NP
-    Modal :: (S\\NP)/VP # Backslashes need to be escaped
-
-    I => Pro             # Word -> Category mapping
-    you => Pro
-
-    the => Det
-
-    # Variables have the special keyword 'var'
-    # '.' prevents permutation
-    # ',' prevents composition
-    and => var\\.,var/.,var
-
-    which => (N\\N)/(S/NP)
-
-    will => Modal # Categories can be either explicit, or families.
-    might => Modal
-
-    cook => TV
-    eat => TV
-
-    mushrooms => N
-    parsnips => N
-    bacon => N
-    """
-)
-
-
-def demo():
-    parser = CCGChartParser(lex, DefaultRuleSet)
-    for parse in parser.parse("I might cook and eat the bacon".split()):
-        printCCGDerivation(parse)
-
-
-if __name__ == "__main__":
-    demo()
