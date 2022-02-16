@@ -30,7 +30,9 @@ This entire process is shown far more clearly in the demonstration:
 python chart.py
 """
 
+from collections import deque
 import itertools
+from queue import Queue
 from typing import List
 
 from ccg.combinator import *
@@ -51,6 +53,9 @@ from nltk.parse import ParserI
 from nltk.parse.chart import AbstractChartRule, Chart, EdgeI
 from nltk.sem.logic import *
 from nltk.tree import Tree
+
+from itertools import product
+from more_itertools import pairwise
 
 
 # Based on the EdgeI class from NLTK.
@@ -290,6 +295,52 @@ def chart_parse(lexicon, tokens: List[str], rules=DefaultRuleSet):
 
     # Output the resulting parses
     return chart.parses(lex.start())
+
+def pairwise_with_context(iterable):
+    """
+    Returns before, first, second, after
+    Where first and second are consequtive pairs
+    and before and after all elements preceding/folling the pair.
+    """
+    iterable = list(iterable)
+    for i in range(len(iterable) - 1):
+        yield iterable[:i], iterable[i], iterable[i + 1], iterable[i+2:]
+
+
+def tok_to_str(t):
+    return f"{str(t._token)}:{str(t.categ())}" 
+
+def toks_to_str(ts):
+    return list(map(tok_to_str, ts))
+
+def my_parse(lexicon, tokens: List[str], rules=DefaultRuleSet):
+    categories = [lexicon.categories(token) for token in tokens]
+
+    # since any token can have multiple categories we try each combination
+    parses = list(product(*categories, repeat=1))
+    q = Queue()
+
+    for parse in parses:
+        q.put(parse)
+
+    while not q.empty():
+        parse = q.get()
+        
+        if len(parse) == 1:
+            print(*toks_to_str(parse))
+
+        for rule in rules:
+            for before, a, b, after in pairwise_with_context(parse):
+                if rule._combinator.can_combine(a.categ(), b.categ()):
+                    combined_categories = list(rule._combinator.combine(a.categ(),b.categ()))
+                    assert len(combined_categories) == 1, "TODO: what would it mean to return a longer list?"
+                    combined_categories = combined_categories[0]
+                    # TODO: handle semantics
+                    combined_token = Token(f"{a._token} {b._token}", combined_categories)
+                    q.put(before + [combined_token] + after)
+    # Output the resulting parses
+
+
 
 
 class CCGChart(Chart):
