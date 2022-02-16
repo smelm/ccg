@@ -294,7 +294,7 @@ class UndirectedTypeRaise(UndirectedBinaryCombinator):
         arg = innermostFunction(arg)
 
         # left, arg_categ are undefined!
-        subs = left.can_unify(arg_categ.arg())
+        subs = function.can_unify(arg.arg())
         if subs is not None:
             return True
         return False
