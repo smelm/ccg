@@ -1,9 +1,9 @@
 from itertools import product
 from queue import Queue
 from typing import List
+from ccg.combinator import BackwardApplication, BackwardBx, BackwardComposition, BackwardSx, BackwardT, ForwardApplication, ForwardComposition, ForwardSubstitution, ForwardT
 from ccg.lexicon import Token
 from ccg.lexicon_builder import LexiconBuilder
-from ccg.chart import DefaultRuleSet
 
 lb = LexiconBuilder()
 S, NP, N = lb.primitive_categories("S", "NP", "N")
@@ -22,6 +22,28 @@ amb_lexicon = lb.entries({
 })
 
 # parses = my_parse(lexicon, "I read the book".split(), ApplicationRuleSet)
+
+###################### Combinators ##################################
+ApplicationRuleSet = [
+    ForwardApplication,
+    BackwardApplication,
+]
+CompositionRuleSet = [
+    ForwardComposition,
+    BackwardComposition,
+    BackwardBx,
+]
+SubstitutionRuleSet = [
+    ForwardSubstitution,
+    BackwardSx,
+]
+TypeRaiseRuleSet = [ForwardT, BackwardT]
+
+# The standard English rule set.
+DefaultRuleSet = (
+    ApplicationRuleSet + CompositionRuleSet + SubstitutionRuleSet + TypeRaiseRuleSet
+)
+#######################################################
 
 
 def pairwise_with_context(iterable):
@@ -60,8 +82,8 @@ def my_parse(lexicon, tokens: List[str], rules=DefaultRuleSet):
 
         for rule in rules:
             for before, a, b, after in pairwise_with_context(parse):
-                if rule._combinator.can_combine(a.categ(), b.categ()):
-                    combined_categories = list(rule._combinator.combine(a.categ(),b.categ()))
+                if rule.can_combine(a.categ(), b.categ()):
+                    combined_categories = list(rule.combine(a.categ(),b.categ()))
                     assert len(combined_categories) == 1, "TODO: what would it mean to return a longer list?"
                     combined_categories = combined_categories[0]
                     # TODO: handle semantics
