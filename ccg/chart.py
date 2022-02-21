@@ -47,6 +47,7 @@ from ccg.combinator import (
     ForwardSubstitution,
     ForwardT,
 )
+from ccg.combinator import FunctionApplication, BackwardCombinator, Composition, Substitution
 from ccg.lexicon import CCGLexicon, Token, fromstring
 from ccg.logic import *
 from nltk.parse import ParserI
@@ -292,7 +293,7 @@ def chart_parse(lexicon, tokens: List[str], rules=DefaultRuleSet):
                                 edges_added_by_rule += 1
 
     # Output the resulting parses
-    return chart.parses(lex.start())
+    return chart.parses(lexicon.start())
 
 
 class CCGChart(Chart):
@@ -346,11 +347,11 @@ def compute_semantics(children, edge):
         function = children[0].label()[0].semantics()
         argument = children[1].label()[0].semantics()
 
-        if isinstance(combinator, UndirectedFunctionApplication):
+        if isinstance(combinator, FunctionApplication):
             return compute_function_semantics(function, argument)
-        elif isinstance(combinator, UndirectedComposition):
+        elif isinstance(combinator, Composition):
             return compute_composition_semantics(function, argument)
-        elif isinstance(combinator, UndirectedSubstitution):
+        elif isinstance(combinator, Substitution):
             return compute_substitution_semantics(function, argument)
         else:
             raise AssertionError("Unsupported combinator '" + combinator + "'")
