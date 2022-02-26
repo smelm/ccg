@@ -137,8 +137,7 @@ RuleSet = [c.value for c in Combinators]
 #######################################################
 
 
-def compute_type_raised_semantics(a, b, rule):
-    core = a
+def compute_type_raised_semantics(core, b, rule):
     parent = None
     while isinstance(core, LambdaExpression):
         parent = core
@@ -151,14 +150,15 @@ def compute_type_raised_semantics(a, b, rule):
 
     if parent is not None:
         parent.term = core
-    else:
-        a = core
 
-    return LambdaExpression(var, a)
+    result = LambdaExpression(var, core)
+    return result
 
 
 def compute_function_semantics(function: Token, argument: Token, rule):
-    return ApplicationExpression(function, argument).simplify()
+    function = function
+    result = ApplicationExpression(function, argument).simplify()
+    return result
 
 
 def compute_composition_semantics(function, argument, rule):
@@ -179,8 +179,6 @@ def compute_substitution_semantics(function, argument, rule):
 
 
 def compute_semantics(a, b, rule):
-    print(a, b, rule)
-
     if isinstance(rule.value, BackwardCombinator):
         b, a = a, b
 
@@ -219,11 +217,45 @@ def toks_to_str(ts):
     return list(map(tok_to_str, ts))
 
 
+class Parse:
+    def __init__(self, tokens, parent_parse=None, rule=None):
+        self.tokens = list(tokens)
+        self.history = [(self, rule)]
+
+        if parent_parse:
+            self.history = parent_parse.history + self.history
+
+    def is_final(self):
+        return len(self.tokens) == 1
+
+    def get_final(self):
+        assert self.is_final()
+        return self.tokens[0]
+
+    def pairwise_with_context(self):
+        return pairwise_with_context(self.tokens)
+
+    def semantics(self):
+        if not self.is_final():
+            return None
+        else:
+            return self.get_final().semantics()
+
+    def print(self):
+        def printable_tokens(tokens):
+            return [f"{str(t._token)}:{str(t.categ())}[{t.semantics() if t.semantics() else ''}]" for t in tokens]
+
+        print("Parse: ", *toks_to_str(self.tokens), self.semantics())
+        print("history:")
+        for p, r in self.history:
+            print(4 * " ", *printable_tokens(p.tokens), r)
+
+
 def my_parse(lexicon, tokens: List[str], rules):
     categories = [lexicon.categories(token) for token in tokens]
 
     # since any token can have multiple categories we try each combination
-    parses = list(product(*categories, repeat=1))
+    parses = list(map(Parse, product(*categories, repeat=1)))
     q = Queue()
 
     for parse in parses:
@@ -233,13 +265,13 @@ def my_parse(lexicon, tokens: List[str], rules):
     while not q.empty():
         parse = q.get()
 
-        if len(parse) == 1:
-            results.append(parse[0])
+        if parse.is_final():
+            results.append(parse)
 
         for rule_type in Combinators:
             rule = rule_type.value
 
-            for before, a, b, after in pairwise_with_context(parse):
+            for before, a, b, after in parse.pairwise_with_context():
                 if rule.can_combine(a.categ(), b.categ()):
                     category = list(rule.combine(a.categ(), b.categ()))
                     assert len(category) == 1, "TODO: what would it mean to return a longer list?"
@@ -248,14 +280,22 @@ def my_parse(lexicon, tokens: List[str], rules):
                     category = category[0]
                     semantics = compute_semantics(a, b, rule_type)
 
-                    q.put(before + [Token(token, category, semantics)] + after)
+                    # this is terrible but needs to be done
+                    # type raise needs two arguments to compute but
+                    # only one of the categories changes
+                    if rule_type == Combinators.FORWARD_TYPE_RAISE:
+                        q.put(Parse(before + [Token(token, category, semantics), b] + after), parse, rule)
+                    elif rule_type == Combinators.BACKWARD_TYPE_RAISE:
+                        q.put(Parse(before + [a, Token(token, category, semantics)] + after), parse, rule)
+                    else:
+                        q.put(Parse(before + [Token(token, category, semantics)] + after, parse, rule))
+
     return results
 
 
 parses = my_parse(ambigous_lexicon, "I love sleep".split(" "), RuleSet)
 for parse in parses:
-    print(tok_to_str(parse))
-    print(parse.semantics())
+    parse.print()
     print(5 * "\n")
 
 
