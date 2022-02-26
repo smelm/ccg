@@ -31,6 +31,7 @@ python chart.py
 """
 
 from collections import deque
+from enum import Enum
 import itertools
 from queue import Queue
 from typing import List
@@ -419,3 +420,249 @@ def printCCGTree(lwidth, tree):
     respadlen = (rwidth - lwidth - len(str_res)) // 2 + lwidth
     print(respadlen * " " + str_res)
     return rwidth
+
+
+###### My parsing algorithm ######
+###################### Combinators ##################################
+# Ensures the left functor takes an argument on the right
+def forwardOnly(left, right):
+    return left.dir().is_forward()
+
+
+# Ensures the right functor takes an argument on the left
+def backwardOnly(left, right):
+    return right.dir().is_backward()
+
+
+# Predicates for restricting application of straight composition.
+def bothForward(left, right):
+    return left.dir().is_forward() and right.dir().is_forward()
+
+
+def bothBackward(left, right):
+    return left.dir().is_backward() and right.dir().is_backward()
+
+
+# Predicates for crossed composition
+def crossedDirs(left, right):
+    return left.dir().is_forward() and right.dir().is_backward()
+
+
+def backwardBxConstraint(left, right):
+    # The functors must be crossed inwards
+    if not crossedDirs(left, right):
+        return False
+    # Permuting combinators must be allowed
+    if not left.dir().can_cross() and right.dir().can_cross():
+        return False
+    # The resulting argument category is restricted to be primitive
+    return left.arg().is_primitive()
+
+
+# Predicate for forward substitution
+def forwardSConstraint(left, right):
+    if not bothForward(left, right):
+        return False
+    return left.res().dir().is_forward() and left.arg().is_primitive()
+
+
+# Predicate for backward crossed substitution
+def backwardSxConstraint(left, right):
+    if not left.dir().can_cross() and right.dir().can_cross():
+        return False
+    if not bothForward(left, right):
+        return False
+    return right.res().dir().is_backward() and right.arg().is_primitive()
+
+
+# Retrieves the left-most functional category.
+# ie, (N\N)/(S/NP) => N\N
+def innermostFunction(categ):
+    while categ.res().is_function():
+        categ = categ.res()
+    return categ
+
+
+# Predicates for type-raising
+# The direction of the innermost category must be towards
+# the primary functor.
+# The restriction that the variable must be primitive is not
+# common to all versions of CCGs; some authors have other restrictions.
+def forwardTConstraint(left, right):
+    arg = innermostFunction(right)
+    return arg.dir().is_backward() and arg.res().is_primitive()
+
+
+def backwardTConstraint(left, right):
+    arg = innermostFunction(left)
+    return arg.dir().is_forward() and arg.res().is_primitive()
+
+
+class Combinators(Enum):
+    FORWARD_APPLICATION = ForwardCombinator(FunctionApplication(), forwardOnly)
+    BACKWARD_APPLICATION = BackwardCombinator(FunctionApplication(), backwardOnly)
+    FORWARD_COMPOSITION = ForwardCombinator(Composition(), forwardOnly)
+    BACKWARD_COMPOSITION = BackwardCombinator(Composition(), backwardOnly)
+    BACKWARD_BX = BackwardCombinator(Composition(), backwardBxConstraint, suffix="x")
+    FORWARD_SUBSTITUTION = ForwardCombinator(Substitution(), forwardSConstraint)
+    BACKWARD_SX = BackwardCombinator(Substitution(), backwardSxConstraint, "x")
+    FORWARD_TYPE_RAISE = ForwardCombinator(TypeRaise(), forwardTConstraint)
+    BACKWARD_TYPE_RAISE = BackwardCombinator(TypeRaise(), backwardTConstraint)
+
+
+RuleSet = [c.value for c in Combinators]
+#######################################################
+
+
+def my_compute_type_raised_semantics(core, b, rule):
+    parent = None
+    while isinstance(core, LambdaExpression):
+        parent = core
+        core = core.term
+
+    var = Variable("F")
+    while var in core.free():
+        var = unique_variable(pattern=var)
+    core = ApplicationExpression(FunctionVariableExpression(var), core)
+
+    if parent is not None:
+        parent.term = core
+
+    result = LambdaExpression(var, core)
+    return result
+
+
+def my_compute_function_semantics(function: Token, argument: Token, rule):
+    return ApplicationExpression(function, argument).simplify()
+
+
+def my_compute_composition_semantics(function, argument, rule):
+    assert isinstance(argument, LambdaExpression), "`" + str(argument) + "` must be a lambda expression"
+    return LambdaExpression(argument.variable, ApplicationExpression(function, argument.term).simplify())
+
+
+def my_compute_substitution_semantics(function, argument, rule):
+    assert isinstance(function, LambdaExpression) and isinstance(function.term, LambdaExpression), (
+        "`" + str(function) + "` must be a lambda expression with 2 arguments"
+    )
+    assert isinstance(argument, LambdaExpression), "`" + str(argument) + "` must be a lambda expression"
+
+    new_argument = ApplicationExpression(argument, VariableExpression(function.variable)).simplify()
+    new_term = ApplicationExpression(function.term, new_argument).simplify()
+
+    return LambdaExpression(function.variable, new_term)
+
+
+def my_compute_semantics(a, b, rule):
+    if isinstance(rule.value, BackwardCombinator):
+        b, a = a, b
+
+    combinator = rule.value._combinator
+    a = a.semantics()
+    b = b.semantics()
+
+    if isinstance(combinator, FunctionApplication):
+        return my_compute_function_semantics(a, b, rule)
+    elif isinstance(combinator, Composition):
+        return my_compute_composition_semantics(a, b, rule)
+    elif isinstance(combinator, Substitution):
+        return my_compute_substitution_semantics(a, b, rule)
+    elif isinstance(combinator, TypeRaise):
+        return my_compute_type_raised_semantics(a, b, rule)
+    else:
+        raise AssertionError("Unsupported combinator '" + combinator + "'")
+
+
+def pairwise_with_context(iterable):
+    """
+    Returns before, first, second, after
+    Where first and second are consequtive pairs
+    and before and after all elements preceding/folling the pair.
+    """
+    iterable = list(iterable)
+    for i in range(len(iterable) - 1):
+        yield iterable[:i], iterable[i], iterable[i + 1], iterable[i + 2 :]
+
+
+def tok_to_str(t):
+    return f"{str(t._token)}:{str(t.categ())}"
+
+
+def toks_to_str(ts):
+    return list(map(tok_to_str, ts))
+
+
+class Parse:
+    def __init__(self, tokens, parent_parse=None, rule=None):
+        self.tokens = list(tokens)
+        self.history = [(self, rule)]
+
+        if parent_parse:
+            self.history = parent_parse.history + self.history
+
+    def is_final(self):
+        return len(self.tokens) == 1
+
+    def get_final(self):
+        assert self.is_final()
+        return self.tokens[0]
+
+    def pairwise_with_context(self):
+        return pairwise_with_context(self.tokens)
+
+    def semantics(self):
+        if not self.is_final():
+            return None
+        else:
+            return self.get_final().semantics()
+
+    def print(self):
+        def printable_tokens(tokens):
+            return [f"{str(t._token)}:{str(t.categ())}[{t.semantics() if t.semantics() else ''}]" for t in tokens]
+
+        print("Parse: ", *toks_to_str(self.tokens), self.semantics())
+        print("history:")
+        for p, r in self.history:
+            print(4 * " ", *printable_tokens(p.tokens), r)
+
+
+def my_parse(lexicon, tokens: List[str], rules):
+    categories = [lexicon.categories(token) for token in tokens]
+
+    # since any token can have multiple categories we try each combination
+    parses = list(map(Parse, product(*categories, repeat=1)))
+    q = Queue()
+
+    for parse in parses:
+        q.put(parse)
+
+    results = []
+    while not q.empty():
+        parse = q.get()
+
+        if parse.is_final():
+            results.append(parse)
+
+        for rule_type in Combinators:
+            rule = rule_type.value
+
+            for before, a, b, after in parse.pairwise_with_context():
+                if rule.can_combine(a.categ(), b.categ()):
+                    category = list(rule.combine(a.categ(), b.categ()))
+                    assert len(category) == 1, "TODO: what would it mean to return a longer list?"
+
+                    token = f"{a._token} {b._token}"
+                    category = category[0]
+                    semantics = my_compute_semantics(a, b, rule_type)
+
+                    # this is terrible but needs to be done
+                    # type raise needs two arguments to compute but
+                    # only one of the categories changes
+                    if rule_type == Combinators.FORWARD_TYPE_RAISE:
+                        q.put(Parse(before + [Token(token, category, semantics), b] + after), parse, rule)
+                    elif rule_type == Combinators.BACKWARD_TYPE_RAISE:
+                        q.put(Parse(before + [a, Token(token, category, semantics)] + after), parse, rule)
+                    else:
+                        q.put(Parse(before + [Token(token, category, semantics)] + after, parse, rule))
+
+    return results
