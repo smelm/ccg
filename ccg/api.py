@@ -182,6 +182,9 @@ class Direction:
     # Used only if type-raising is implemented as a unary rule, as it
     # must inherit restrictions from the argument category.
     def can_unify(self, other):
+        if self.dir() != other.dir():
+            return None
+
         if other.is_variable():
             return [("_", self.restrs())]
         elif self.is_variable():
@@ -336,6 +339,7 @@ class FunctionalCategory(AbstractCCGCategory):
         if other.is_function():
             sa = self._res.can_unify(other.res())
             sd = self._dir.can_unify(other.dir())
+
             if sa is not None and sd is not None:
                 sb = self._arg.substitute(sa).can_unify(other.arg().substitute(sa))
                 if sb is not None:

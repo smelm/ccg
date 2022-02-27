@@ -1,5 +1,4 @@
 from operator import itemgetter
-from re import L
 import pytest
 from nltk.sem.logic import (
     ConstantExpression,
