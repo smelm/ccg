@@ -12,31 +12,23 @@ BACKWARD = Direction.RIGHT.value
 # double __ mean parenthesis
 # direction indicated through alphabetical order
 
+CATEGORIES = dict()
 
-function_X_Y = unwrap_builder(X << Y)
-function_Y_Z = unwrap_builder(Y << Z)
-function_X_Z = unwrap_builder(X << Z)
-function_X__Y_Z = unwrap_builder(X << (Y << Z))
-function_Y_X = unwrap_builder(Y >> X)
-function__Y_Z__X = unwrap_builder((Y << Z) >> X)
-function_X__Z_Y = unwrap_builder(X << (Z >> Y))
+CATEGORIES["X/Y"] = unwrap_builder(X << Y)
+CATEGORIES["Y/Z"] = unwrap_builder(Y << Z)
+CATEGORIES["X/Z"] = unwrap_builder(X << Z)
+CATEGORIES["X/(Y/Z)"] = unwrap_builder(X << (Y << Z))
+CATEGORIES["X\\Y"] = unwrap_builder(Y >> X)
+CATEGORIES["X\\(Y/Z)"] = unwrap_builder((Y << Z) >> X)
+# CATEGORIES["X/(Y\\Z)"] = unwrap_builder(X << (Z >> Y))
 
 X = unwrap_builder(X)
 Y = unwrap_builder(Y)
 Z = unwrap_builder(Z)
 
-CATEGORIES = [
-    X,
-    Y,
-    Z,
-    function_X_Y,
-    function_Y_Z,
-    function_X_Z,
-    function_X__Y_Z,
-    function_Y_X,
-    function__Y_Z__X,
-    function_X__Z_Y,
-]
+CATEGORIES["X"] = X
+CATEGORIES["Y"] = Y
+CATEGORIES["Z"] = Z
 
 
 def get_expected_result(left, right, expected_combinations):
@@ -52,7 +44,7 @@ def get_expected_result(left, right, expected_combinations):
 
 def combines_only(rule, expected_combinations):
     # all left right combinations
-    all_combinations = list(itertools.product(CATEGORIES, CATEGORIES))
+    all_combinations = list(itertools.product(CATEGORIES.values(), CATEGORIES.values()))
     # in both permutations
     all_combinations = itertools.chain(all_combinations, [(r, l) for l, r in all_combinations])
 
@@ -72,19 +64,32 @@ class TestCombinators:
     def test_forward_application(self):
         combines_only(
             Combinators.FORWARD_APPLICATION.value,
-            [(function_X_Y, Y, X), (function_Y_Z, Z, Y), (function_X__Y_Z, function_Y_Z, X), (function_X_Z, Z, X)],
+            [
+                (CATEGORIES["X/Y"], Y, X),
+                (CATEGORIES["Y/Z"], Z, Y),
+                (CATEGORIES["X/(Y/Z)"], CATEGORIES["Y/Z"], X),
+                (CATEGORIES["X/Z"], Z, X),
+            ],
         )
 
     def test_backward_application(self):
         combines_only(
-            Combinators.BACKWARD_APPLICATION.value, [(Y, function_Y_X, X), (function_Y_Z, function__Y_Z__X, X)]
+            Combinators.BACKWARD_APPLICATION.value,
+            [(Y, CATEGORIES["X\\Y"], X), (CATEGORIES["Y/Z"], CATEGORIES["X\\(Y/Z)"], X)],
         )
 
     def test_forward_composition(self):
-        combines_only(Combinators.FORWARD_COMPOSITION.value, [(function_X_Y, function_Y_Z, function_X_Z)])
+        combines_only(
+            Combinators.FORWARD_COMPOSITION.value, [(CATEGORIES["X/Y"], CATEGORIES["Y/Z"], CATEGORIES["X/Z"])]
+        )
 
     def test_backward_composition(self):
-        combines_only(Combinators.BACKWARD_COMPOSITION.value, [(function_Y_Z, function_Y_X, function_X_Z)])
+        combines_only(
+            Combinators.BACKWARD_COMPOSITION.value, [(CATEGORIES["Y/Z"], CATEGORIES["X\\Y"], CATEGORIES["X/Z"])]
+        )
 
     def test_forward_type_raising(self):
         combines_only(Combinators.FORWARD_TYPE_RAISE.value, [])
+
+    def test_forward_type_raising(self):
+        combines_only(Combinators.BACKWARD_TYPE_RAISE.value, [])
