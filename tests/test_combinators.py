@@ -72,6 +72,9 @@ class TestCombinators:
             Combinators.BACKWARD_TYPE_RAISE.value, [(CAT["(X/Y)\\(X/Y)"], CAT["Y"], unwrap_builder((X << Y) >> X))]
         )
 
+    def test_backwards_cross_substitution(self):
+        combines_only(Combinators.BACKWARD_SX.value, [(CAT["X/Z"], CAT["(Y\\X)/Z"], CAT["Y/Z"])])
+
 
 def get_expected_result(left, right, expected_combinations):
     results = [res for l, r, res in expected_combinations if l == left and r == right]
