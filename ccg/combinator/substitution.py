@@ -1,3 +1,4 @@
+from ccg.api import FunctionalCategory
 from .base import BinaryCombinator
 
 
