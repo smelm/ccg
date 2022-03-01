@@ -62,6 +62,10 @@ class TestCombinators:
             [(CAT["Y/Z"], CAT["X\\Y"], CAT["X/Z"]), (CAT["(X/Y)\\(X/Y)"], CAT["(X/Y)\\(X/Y)"], CAT["(X/Y)\\(X/Y)"])],
         )
 
+
+    def test_cross_composition(self):
+        combines_only(Combinators.BACKWARD_BX.value, [(CAT["Y/Z"], CAT["X\\Y"], CAT["X/Z"])])
+
     def test_forward_type_raising(self):
         combines_only(
             Combinators.FORWARD_TYPE_RAISE.value, [(CAT["X"], CAT["(Y\\X)/Z"], unwrap_builder(Y << (X >> Y)))]
@@ -74,6 +78,7 @@ class TestCombinators:
 
     def test_backwards_cross_substitution(self):
         combines_only(Combinators.BACKWARD_SX.value, [(CAT["X/Z"], CAT["(Y\\X)/Z"], CAT["Y/Z"])])
+
 
 
 def get_expected_result(left, right, expected_combinations):
