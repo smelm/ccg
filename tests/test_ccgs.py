@@ -113,8 +113,8 @@ class TestLexiconParsing:
         assert str(lexicon_with_semantics) == "\n".join(
             [
                 "book => N {book}",
-                "read => (S/NP) {x -> read(x)}",
-                "the => (NP/N) {x -> x}",
+                "read => (S/NP) {\\x.read(x)}",
+                "the => (NP/N) {\\x.x}",
             ]
         )
 
