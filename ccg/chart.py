@@ -34,6 +34,7 @@ from collections import deque
 from enum import Enum
 import itertools
 from queue import Queue
+from turtle import back
 from typing import List
 
 from ccg.combinator import *
@@ -512,6 +513,88 @@ class Combinators(Enum):
 
 RuleSet = [c.value for c in Combinators]
 #######################################################
+
+
+def is_forward(c):
+    return c.dir().is_forward()
+
+
+def is_backward(c):
+    return c.dir().is_backward()
+
+
+def first(func):
+    return lambda left, right: func(left)
+
+
+def second(func):
+    return lambda left, right: func(right)
+
+
+def forward(func):
+    return lambda left, right: func(left, right)
+
+
+def backward(func):
+    return lambda left, right: func(right, left)
+
+
+def both(cond):
+    return lambda left, right: cond(left) and cond(right)
+
+
+def can_compose(c):
+    return c.dir().can_compose()
+
+
+def are_composable(left, right):
+    return left.arg().can_unify(right.res()) is not None
+
+
+def is_function(c):
+    return c.is_function()
+
+
+def does_accept_argument(function, argument):
+    return function.args().can_unify(argument)
+
+
+def backwardBxConstraint(left, right):
+    # The resulting argument category is restricted to be primitive
+    return left.arg().is_primitive()
+
+
+def is_primitive(c):
+    return c.is_primitive()
+
+
+def can_dir_cross(c):
+    return c.dir().can_cross()
+
+
+def argument(func):
+    return lambda *cs: func(c.arg() for c in cs)
+
+
+class MyCombinator:
+    def __init__(self):
+        self
+
+    def combine(self) -> List:
+        pass
+
+
+FORWARD_APPLICATION = MyCombinator([first(is_function), first(is_forward), forward(does_accept_argument)])
+BACKWARD_APPLICATION = MyCombinator([second(is_function), second(is_backward), backward(does_accept_argument)])
+FORWARD_COMPOSITION = MyCombinator([both(is_function), both(can_compose), are_composable])
+BACKWARD_COMPOSITION = MyCombinator([both(is_function), both(can_compose), backward(are_composable)])
+BACKWARD_BX = MyCombinator([crossedDirs, both(can_dir_cross), first(argument(is_primitive))])
+
+FORWARD_SUBSTITUTION = MyCombinator()
+FORWARD_SUBSTITUTION = ForwardCombinator(Substitution(), forwardSConstraint)
+BACKWARD_SX = BackwardCombinator(Substitution(), backwardSxConstraint, "x")
+FORWARD_TYPE_RAISE = ForwardCombinator(TypeRaise(), forwardTConstraint)
+BACKWARD_TYPE_RAISE = BackwardCombinator(TypeRaise(), backwardTConstraint)
 
 
 def my_compute_type_raised_semantics(core, b, rule):
