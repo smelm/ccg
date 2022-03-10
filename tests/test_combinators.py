@@ -92,11 +92,6 @@ class TestCombinators:
         )
 
     def test_forward_substitution(self):
-        print(
-            Combinators.FORWARD_SUBSTITUTION.value.can_combine(
-                unwrap_builder(X << Y << Z), CAT["Y/Z"]
-            )
-        )
         combines_only(
             Combinators.FORWARD_SUBSTITUTION.value,
             [(CAT["(X/Y)/Z"], CAT["Y/Z"], CAT["X/Z"])],

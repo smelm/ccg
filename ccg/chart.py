@@ -34,6 +34,7 @@ from collections import deque
 from enum import Enum
 import itertools
 from queue import Queue
+from turtle import back
 from typing import List
 
 from ccg.combinator import *
@@ -540,49 +541,34 @@ class MyCombinator:
         return f"{'<' if self.backward else '>'}{self._combinator}{self._suffix}"
 
 
-class MyComposableCombinator(MyCombinator):
-    def __init__(self, combinator, predicate_list, suffix="", backward=False) -> None:
-        super().__init__(
-            combinator, self.make_predicate(predicate_list), suffix, backward
-        )
+class MyComposableCombinator:
+    def __init__(
+        self, combinator, predicate_list, combine, suffix="", backward=False
+    ) -> None:
+        self.predicate_list = predicate_list
+        self._combine = combine
+        self._combinator = combinator
+        self.backward = backward
 
-    def make_predicate(self, predicate_list):
-        def pred(left, right):
-            for p in predicate_list:
-                if not p(left, right):
-                    return False
-            return True
+    def can_combine(self, left, right):
+        for p in self.predicate_list:
+            if not p(left, right):
+                return False
+        return True
 
-        return pred
-
-
-"""
-
-           return not function.arg().can_unify(argument) is None
-
-    def combine(self, function, argument):
-        if not function.is_function():
-            return
-
-        subs = function.arg().can_unify(argument)
-        if subs is None:
-            return
-
-        yield function.res().substitute(subs)
-
-    def __str__(self):
-        return ""
-
-forwardOnly
-"""
+    def combine(self, left, right):
+        if not self.can_combine(left, right):
+            return []
+        else:
+            return self._combine(left, right)
 
 
-def first(*predicate_list):
-    return [lambda left, right: p(left) for p in predicate_list]
+def first(p):
+    return lambda left, right: p(left)
 
 
-def second(*predicate_list):
-    return [lambda left, right: p(right) for p in predicate_list]
+def second(p):
+    return lambda left, right: p(right)
 
 
 def is_function(cat):
@@ -599,7 +585,15 @@ def can_be_applied(function, arg):
 
 class Combinators(Enum):
     FORWARD_APPLICATION = MyComposableCombinator(
-        FunctionApplication(), first(is_function, is_forward) + [can_be_applied]
+        FunctionApplication(),
+        [
+            first(is_function),
+            first(is_forward),
+            can_be_applied,
+        ],
+        lambda function, argument: [
+            function.res().substitute(function.arg().can_unify(argument))
+        ],
     )
     BACKWARD_APPLICATION = MyCombinator(
         FunctionApplication(), backwardOnly, backward=True
