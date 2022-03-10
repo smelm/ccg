@@ -540,8 +540,67 @@ class MyCombinator:
         return f"{'<' if self.backward else '>'}{self._combinator}{self._suffix}"
 
 
+class MyComposableCombinator(MyCombinator):
+    def __init__(self, combinator, predicate_list, suffix="", backward=False) -> None:
+        super().__init__(
+            combinator, self.make_predicate(predicate_list), suffix, backward
+        )
+
+    def make_predicate(self, predicate_list):
+        def pred(left, right):
+            for p in predicate_list:
+                if not p(left, right):
+                    return False
+            return True
+
+        return pred
+
+
+"""
+
+           return not function.arg().can_unify(argument) is None
+
+    def combine(self, function, argument):
+        if not function.is_function():
+            return
+
+        subs = function.arg().can_unify(argument)
+        if subs is None:
+            return
+
+        yield function.res().substitute(subs)
+
+    def __str__(self):
+        return ""
+
+forwardOnly
+"""
+
+
+def first(*predicate_list):
+    return [lambda left, right: p(left) for p in predicate_list]
+
+
+def second(*predicate_list):
+    return [lambda left, right: p(right) for p in predicate_list]
+
+
+def is_function(cat):
+    return cat.is_function()
+
+
+def is_forward(cat):
+    return cat.dir().is_forward()
+
+
+def can_be_applied(function, arg):
+    return function.arg().can_unify(arg) is not None
+
+
 class Combinators(Enum):
-    FORWARD_APPLICATION = MyCombinator(FunctionApplication(), forwardOnly)
+    FORWARD_APPLICATION = MyComposableCombinator(
+        FunctionApplication(), first(is_function, is_forward) + [can_be_applied]
+    )
     BACKWARD_APPLICATION = MyCombinator(
         FunctionApplication(), backwardOnly, backward=True
     )
