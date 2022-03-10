@@ -498,16 +498,45 @@ def backwardTConstraint(left, right):
     return arg.dir().is_forward() and arg.res().is_primitive()
 
 
+class MyCombinator:
+    def __init__(self, combinator, predicate, suffix="", backward=False) -> None:
+        self._combinator = combinator
+        self.backward = backward
+        self.predicate = predicate
+        self._suffix = suffix
+
+    def switch_args_if_backwards(self, left, right):
+        if self.backward:
+            return right, left
+        else:
+            return left, right
+
+    def can_combine(self, left, right):
+
+        return self._combinator.can_combine(*self.switch_args_if_backwards(left, right)) and self.predicate(left, right)
+
+    def combine(self, left, right):
+        # this cannot be switched for backward
+
+        if not self.can_combine(left, right):
+            return []
+
+        return self._combinator.combine(*self.switch_args_if_backwards(left, right))
+
+    def __str__(self):
+        return f"{'<' if self.backward else '>'}{self._combinator}{self._suffix}"
+
+
 class Combinators(Enum):
-    FORWARD_APPLICATION = ForwardCombinator(FunctionApplication(), forwardOnly)
-    BACKWARD_APPLICATION = BackwardCombinator(FunctionApplication(), backwardOnly)
-    FORWARD_COMPOSITION = ForwardCombinator(Composition(), forwardOnly)
-    BACKWARD_COMPOSITION = BackwardCombinator(Composition(), backwardOnly)
-    BACKWARD_BX = BackwardCombinator(Composition(), backwardBxConstraint, suffix="x")
-    FORWARD_SUBSTITUTION = ForwardCombinator(Substitution(), forwardSConstraint)
-    BACKWARD_SX = BackwardCombinator(Substitution(), backwardSxConstraint, "x")
-    FORWARD_TYPE_RAISE = ForwardCombinator(TypeRaise(), forwardTConstraint)
-    BACKWARD_TYPE_RAISE = BackwardCombinator(TypeRaise(), backwardTConstraint)
+    FORWARD_APPLICATION = MyCombinator(FunctionApplication(), forwardOnly)
+    BACKWARD_APPLICATION = MyCombinator(FunctionApplication(), backwardOnly, backward=True)
+    FORWARD_COMPOSITION = MyCombinator(Composition(), forwardOnly)
+    BACKWARD_COMPOSITION = MyCombinator(Composition(), backwardOnly, backward=True)
+    BACKWARD_BX = MyCombinator(Composition(), backwardBxConstraint, backward=True, suffix="x")
+    FORWARD_SUBSTITUTION = MyCombinator(Substitution(), forwardSConstraint)
+    BACKWARD_SX = MyCombinator(Substitution(), backwardSxConstraint, backward=True, suffix="x")
+    FORWARD_TYPE_RAISE = MyCombinator(TypeRaise(), forwardTConstraint)
+    BACKWARD_TYPE_RAISE = MyCombinator(TypeRaise(), backwardTConstraint, backward=True)
 
 
 RuleSet = [c.value for c in Combinators]
@@ -554,7 +583,7 @@ def my_compute_substitution_semantics(function, argument, rule):
 
 
 def my_compute_semantics(a, b, rule):
-    if isinstance(rule.value, BackwardCombinator):
+    if rule.value.backward:
         b, a = a, b
 
     combinator = rule.value._combinator
