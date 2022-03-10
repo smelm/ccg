@@ -57,7 +57,10 @@ class AbstractCCGCategory(metaclass=ABCMeta):
         pass
 
     def __eq__(self, other):
-        return self.__class__ is other.__class__ and self._comparison_key == other._comparison_key
+        return (
+            self.__class__ is other.__class__
+            and self._comparison_key == other._comparison_key
+        )
 
     def __ne__(self, other):
         return not self == other
@@ -211,7 +214,10 @@ class Direction:
         return "." not in self._restrs
 
     def __eq__(self, other):
-        return self.__class__ is other.__class__ and self._comparison_key == other._comparison_key
+        return (
+            self.__class__ is other.__class__
+            and self._comparison_key == other._comparison_key
+        )
 
     def __ne__(self, other):
         return not self == other

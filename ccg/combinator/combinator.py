@@ -103,7 +103,9 @@ class TypeRaise(BinaryCombinator):
         return False
 
     def combine(self, function, arg):
-        if not (function.is_primitive() and arg.is_function() and arg.res().is_function()):
+        if not (
+            function.is_primitive() and arg.is_function() and arg.res().is_function()
+        ):
             return
 
         # Type-raising matches only the innermost application.
@@ -112,7 +114,9 @@ class TypeRaise(BinaryCombinator):
         subs = function.can_unify(arg.arg())
         if subs is not None:
             xcat = arg.res().substitute(subs)
-            yield FunctionalCategory(xcat, FunctionalCategory(xcat, function, arg.dir()), -(arg.dir()))
+            yield FunctionalCategory(
+                xcat, FunctionalCategory(xcat, function, arg.dir()), -(arg.dir())
+            )
 
     def __str__(self):
         return "T"

@@ -48,7 +48,12 @@ from ccg.combinator import (
     ForwardSubstitution,
     ForwardT,
 )
-from ccg.combinator import FunctionApplication, BackwardCombinator, Composition, Substitution
+from ccg.combinator import (
+    FunctionApplication,
+    BackwardCombinator,
+    Composition,
+    Substitution,
+)
 from ccg.lexicon import CCGLexicon, Token, fromstring
 from ccg.logic import *
 from nltk.parse import ParserI
@@ -261,7 +266,9 @@ SubstitutionRuleSet = [
 TypeRaiseRuleSet = [ForwardTypeRaiseRule(), BackwardTypeRaiseRule()]
 
 # The standard English rule set.
-DefaultRuleSet = ApplicationRuleSet + CompositionRuleSet + SubstitutionRuleSet + TypeRaiseRuleSet
+DefaultRuleSet = (
+    ApplicationRuleSet + CompositionRuleSet + SubstitutionRuleSet + TypeRaiseRuleSet
+)
 
 
 # Implements the CYK algorithm
@@ -403,7 +410,9 @@ def printCCGTree(lwidth, tree):
     # Is a leaf node.
     # Don't print anything, but account for the space occupied.
     if not isinstance(tree.label(), tuple):
-        return max(rwidth, 2 + lwidth + len("%s" % tree.label()), 2 + lwidth + len(tree[0]))
+        return max(
+            rwidth, 2 + lwidth + len("%s" % tree.label()), 2 + lwidth + len(tree[0])
+        )
 
     (token, op) = tree.label()
 
@@ -513,7 +522,9 @@ class MyCombinator:
 
     def can_combine(self, left, right):
 
-        return self._combinator.can_combine(*self.switch_args_if_backwards(left, right)) and self.predicate(left, right)
+        return self._combinator.can_combine(
+            *self.switch_args_if_backwards(left, right)
+        ) and self.predicate(left, right)
 
     def combine(self, left, right):
         # this cannot be switched for backward
@@ -521,7 +532,9 @@ class MyCombinator:
         if not self.can_combine(left, right):
             return []
 
-        return list(self._combinator.combine(*self.switch_args_if_backwards(left, right)))
+        return list(
+            self._combinator.combine(*self.switch_args_if_backwards(left, right))
+        )
 
     def __str__(self):
         return f"{'<' if self.backward else '>'}{self._combinator}{self._suffix}"
@@ -529,12 +542,18 @@ class MyCombinator:
 
 class Combinators(Enum):
     FORWARD_APPLICATION = MyCombinator(FunctionApplication(), forwardOnly)
-    BACKWARD_APPLICATION = MyCombinator(FunctionApplication(), backwardOnly, backward=True)
+    BACKWARD_APPLICATION = MyCombinator(
+        FunctionApplication(), backwardOnly, backward=True
+    )
     FORWARD_COMPOSITION = MyCombinator(Composition(), forwardOnly)
     BACKWARD_COMPOSITION = MyCombinator(Composition(), backwardOnly, backward=True)
-    BACKWARD_BX = MyCombinator(Composition(), backwardBxConstraint, backward=True, suffix="x")
+    BACKWARD_BX = MyCombinator(
+        Composition(), backwardBxConstraint, backward=True, suffix="x"
+    )
     FORWARD_SUBSTITUTION = MyCombinator(Substitution(), forwardSConstraint)
-    BACKWARD_SX = MyCombinator(Substitution(), backwardSxConstraint, backward=True, suffix="x")
+    BACKWARD_SX = MyCombinator(
+        Substitution(), backwardSxConstraint, backward=True, suffix="x"
+    )
     FORWARD_TYPE_RAISE = MyCombinator(TypeRaise(), forwardTConstraint)
     BACKWARD_TYPE_RAISE = MyCombinator(TypeRaise(), backwardTConstraint, backward=True)
 
@@ -566,17 +585,25 @@ def my_compute_function_semantics(function: Token, argument: Token, rule):
 
 
 def my_compute_composition_semantics(function, argument, rule):
-    assert isinstance(argument, LambdaExpression), "`" + str(argument) + "` must be a lambda expression"
-    return LambdaExpression(argument.variable, ApplicationExpression(function, argument.term).simplify())
+    assert isinstance(argument, LambdaExpression), (
+        "`" + str(argument) + "` must be a lambda expression"
+    )
+    return LambdaExpression(
+        argument.variable, ApplicationExpression(function, argument.term).simplify()
+    )
 
 
 def my_compute_substitution_semantics(function, argument, rule):
-    assert isinstance(function, LambdaExpression) and isinstance(function.term, LambdaExpression), (
-        "`" + str(function) + "` must be a lambda expression with 2 arguments"
+    assert isinstance(function, LambdaExpression) and isinstance(
+        function.term, LambdaExpression
+    ), ("`" + str(function) + "` must be a lambda expression with 2 arguments")
+    assert isinstance(argument, LambdaExpression), (
+        "`" + str(argument) + "` must be a lambda expression"
     )
-    assert isinstance(argument, LambdaExpression), "`" + str(argument) + "` must be a lambda expression"
 
-    new_argument = ApplicationExpression(argument, VariableExpression(function.variable)).simplify()
+    new_argument = ApplicationExpression(
+        argument, VariableExpression(function.variable)
+    ).simplify()
     new_term = ApplicationExpression(function.term, new_argument).simplify()
 
     return LambdaExpression(function.variable, new_term)
@@ -647,7 +674,10 @@ class Parse:
 
     def print(self):
         def printable_tokens(tokens):
-            return [f"{str(t._token)}:{str(t.categ())}[{t.semantics() if t.semantics() else ''}]" for t in tokens]
+            return [
+                f"{str(t._token)}:{str(t.categ())}[{t.semantics() if t.semantics() else ''}]"
+                for t in tokens
+            ]
 
         print("Parse: ", *toks_to_str(self.tokens), self.semantics())
         print("history:")
@@ -678,7 +708,9 @@ def my_parse(lexicon, tokens: List[str], rules):
             for before, a, b, after in parse.pairwise_with_context():
                 if rule.can_combine(a.categ(), b.categ()):
                     category = list(rule.combine(a.categ(), b.categ()))
-                    assert len(category) == 1, "TODO: what would it mean to return a longer list?"
+                    assert (
+                        len(category) == 1
+                    ), "TODO: what would it mean to return a longer list?"
 
                     token = f"{a._token} {b._token}"
                     category = category[0]
@@ -688,10 +720,28 @@ def my_parse(lexicon, tokens: List[str], rules):
                     # type raise needs two arguments to compute but
                     # only one of the categories changes
                     if rule_type == Combinators.FORWARD_TYPE_RAISE:
-                        q.put(Parse(before + [Token(token, category, semantics), b] + after), parse, rule)
+                        q.put(
+                            Parse(
+                                before + [Token(token, category, semantics), b] + after
+                            ),
+                            parse,
+                            rule,
+                        )
                     elif rule_type == Combinators.BACKWARD_TYPE_RAISE:
-                        q.put(Parse(before + [a, Token(token, category, semantics)] + after), parse, rule)
+                        q.put(
+                            Parse(
+                                before + [a, Token(token, category, semantics)] + after
+                            ),
+                            parse,
+                            rule,
+                        )
                     else:
-                        q.put(Parse(before + [Token(token, category, semantics)] + after, parse, rule))
+                        q.put(
+                            Parse(
+                                before + [Token(token, category, semantics)] + after,
+                                parse,
+                                rule,
+                            )
+                        )
 
     return results

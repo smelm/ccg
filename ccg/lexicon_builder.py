@@ -39,7 +39,9 @@ class PrimitiveCategoryBuilder(Builder):
         return self.category.categ()
 
     def restrictions(self, *restrictions):
-        return PrimitiveCategoryBuilder(self.category_name(), self.category.restrs() + list(restrictions))
+        return PrimitiveCategoryBuilder(
+            self.category_name(), self.category.restrs() + list(restrictions)
+        )
 
     def __getitem__(self, restrs):
         return self.restrictions(restrs)
@@ -47,7 +49,9 @@ class PrimitiveCategoryBuilder(Builder):
 
 class FunctionBuilder(Builder):
     def __init__(self, return_category, argument_category, direction):
-        self.category = FunctionalCategory(return_category, argument_category, direction)
+        self.category = FunctionalCategory(
+            return_category, argument_category, direction
+        )
 
 
 class FamilyBuilder(Builder):
@@ -73,7 +77,10 @@ class LexiconBuilder:
         self.start = None
 
     def _resolve_family(self, category):
-        if isinstance(category, PrimitiveCategory) and category.categ() in self.lexicon._families.keys():
+        if (
+            isinstance(category, PrimitiveCategory)
+            and category.categ() in self.lexicon._families.keys()
+        ):
             return self.lexicon._families[category.categ()][0]
         else:
             return category

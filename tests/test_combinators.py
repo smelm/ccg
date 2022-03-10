@@ -1,4 +1,3 @@
-from ccg.api import FunctionalCategory, PrimitiveCategory
 from ccg.chart import Combinators
 from ccg.lexicon_builder import Direction, unwrap_builder, LexiconBuilder
 
@@ -93,14 +92,20 @@ class TestCombinators:
         )
 
     def test_forward_substitution(self):
-        print(Combinators.FORWARD_SUBSTITUTION.value.can_combine(unwrap_builder(X << Y << Z), CAT["Y/Z"]))
+        print(
+            Combinators.FORWARD_SUBSTITUTION.value.can_combine(
+                unwrap_builder(X << Y << Z), CAT["Y/Z"]
+            )
+        )
         combines_only(
             Combinators.FORWARD_SUBSTITUTION.value,
             [(CAT["(X/Y)/Z"], CAT["Y/Z"], CAT["X/Z"])],
         )
 
     def test_backwards_cross_substitution(self):
-        combines_only(Combinators.BACKWARD_SX.value, [(CAT["X/Z"], CAT["(Y\\X)/Z"], CAT["Y/Z"])])
+        combines_only(
+            Combinators.BACKWARD_SX.value, [(CAT["X/Z"], CAT["(Y\\X)/Z"], CAT["Y/Z"])]
+        )
 
 
 def get_expected_result(left, right, expected_combinations):
@@ -118,7 +123,9 @@ def combines_only(rule, expected_combinations):
     # all left right combinations
     all_combinations = list(itertools.product(CAT.values(), CAT.values()))
     # in both permutations
-    all_combinations = itertools.chain(all_combinations, [(r, l) for l, r in all_combinations])
+    all_combinations = itertools.chain(
+        all_combinations, [(r, l) for l, r in all_combinations]
+    )
 
     for left, right in all_combinations:
         expected_result = get_expected_result(left, right, expected_combinations)

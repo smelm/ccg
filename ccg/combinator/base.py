@@ -36,7 +36,9 @@ class ForwardCombinator(BinaryCombinator):
         self._suffix = suffix
 
     def can_combine(self, left, right):
-        return self._combinator.can_combine(left, right) and self._predicate(left, right)
+        return self._combinator.can_combine(left, right) and self._predicate(
+            left, right
+        )
 
     def combine(self, left, right):
         yield from self._combinator.combine(left, right)
@@ -56,7 +58,9 @@ class BackwardCombinator(BinaryCombinator):
         self._suffix = suffix
 
     def can_combine(self, left, right):
-        return self._combinator.can_combine(right, left) and self._predicate(left, right)
+        return self._combinator.can_combine(right, left) and self._predicate(
+            left, right
+        )
 
     def combine(self, left, right):
         yield from self._combinator.combine(right, left)

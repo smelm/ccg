@@ -23,11 +23,15 @@ class Substitution(BinaryCombinator):
 
         if not (function.dir().can_compose() and argument.dir().can_compose()):
             return False
-        return (function.res().arg() == argument.res()) and (function.arg() == argument.arg())
+        return (function.res().arg() == argument.res()) and (
+            function.arg() == argument.arg()
+        )
 
     def combine(self, function, argument):
         if self.can_combine(function, argument):
-            yield FunctionalCategory(function.res().res(), argument.arg(), argument.dir())
+            yield FunctionalCategory(
+                function.res().res(), argument.arg(), argument.dir()
+            )
 
     def __str__(self):
         return "S"

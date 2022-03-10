@@ -103,7 +103,10 @@ class CCGLexicon:
 
     def __str__(self):
         return "\n".join(
-            [f"{ident} => {' | '.join(map(str, categories))}" for ident, categories in sorted(self._entries.items())]
+            [
+                f"{ident} => {' | '.join(map(str, categories))}"
+                for ident, categories in sorted(self._entries.items())
+            ]
         )
 
 
@@ -183,7 +186,9 @@ def parsePrimitiveCategory(chunks, primitives, families, var):
     if catstr in primitives:
         subscrs = parseSubscripts(chunks[1])
         return (PrimitiveCategory(catstr, subscrs), var)
-    raise AssertionError("String '" + catstr + "' is neither a family nor primitive category.")
+    raise AssertionError(
+        "String '" + catstr + "' is neither a family nor primitive category."
+    )
 
 
 def augParseCategory(line, primitives, families, var=None):
@@ -198,7 +203,9 @@ def augParseCategory(line, primitives, families, var=None):
     if cat_string.startswith("("):
         (res, var) = augParseCategory(cat_string[1:-1], primitives, families, var)
     else:
-        (res, var) = parsePrimitiveCategory(PRIM_RE.match(cat_string).groups(), primitives, families, var)
+        (res, var) = parsePrimitiveCategory(
+            PRIM_RE.match(cat_string).groups(), primitives, families, var
+        )
 
     while rest != "":
         app = APP_RE.match(rest).groups()
@@ -209,7 +216,9 @@ def augParseCategory(line, primitives, families, var=None):
         if cat_string.startswith("("):
             (arg, var) = augParseCategory(cat_string[1:-1], primitives, families, var)
         else:
-            (arg, var) = parsePrimitiveCategory(PRIM_RE.match(cat_string).groups(), primitives, families, var)
+            (arg, var) = parsePrimitiveCategory(
+                PRIM_RE.match(cat_string).groups(), primitives, families, var
+            )
         res = FunctionalCategory(res, arg, direction)
 
     return (res, var)
@@ -234,7 +243,9 @@ def fromstring(lex_str: str, include_semantics: bool = False):
             # A line of primitive categories.
             # The first one is the target category
             # ie, :- S, N, NP, VP
-            primitives = primitives + [prim.strip() for prim in line[2:].strip().split(",")]
+            primitives = primitives + [
+                prim.strip() for prim in line[2:].strip().split(",")
+            ]
         else:
             # Either a family definition, or a word definition
             (ident, sep, rhs) = LEX_RE.match(line).groups()
@@ -249,9 +260,14 @@ def fromstring(lex_str: str, include_semantics: bool = False):
                 semantics = None
                 if include_semantics is True:
                     if semantics_str is None:
-                        raise AssertionError(line + " must contain semantics because include_semantics is set to True")
+                        raise AssertionError(
+                            line
+                            + " must contain semantics because include_semantics is set to True"
+                        )
                     else:
-                        semantics = Expression.fromstring(SEMANTICS_RE.match(semantics_str).groups()[0])
+                        semantics = Expression.fromstring(
+                            SEMANTICS_RE.match(semantics_str).groups()[0]
+                        )
                 # Word definition
                 # ie, which => (N\N)/(S/NP)
                 entries[ident].append(Token(ident, cat, semantics))
