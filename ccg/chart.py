@@ -521,7 +521,7 @@ class MyCombinator:
         if not self.can_combine(left, right):
             return []
 
-        return self._combinator.combine(*self.switch_args_if_backwards(left, right))
+        return list(self._combinator.combine(*self.switch_args_if_backwards(left, right)))
 
     def __str__(self):
         return f"{'<' if self.backward else '>'}{self._combinator}{self._suffix}"

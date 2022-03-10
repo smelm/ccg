@@ -109,9 +109,9 @@ def get_expected_result(left, right, expected_combinations):
     assert len(results) < 2
 
     if len(results) == 0:
-        return False
+        return []
 
-    return results[0]
+    return results
 
 
 def combines_only(rule, expected_combinations):
@@ -121,14 +121,8 @@ def combines_only(rule, expected_combinations):
     all_combinations = itertools.chain(all_combinations, [(r, l) for l, r in all_combinations])
 
     for left, right in all_combinations:
-        if expected_result := get_expected_result(left, right, expected_combinations):
-            if not rule.can_combine(left, right):
-                print(left, right)
-            assert rule.can_combine(left, right), f"cannot combine {left}, {right}"
-
-            actual_result = next(rule.combine(left, right))
-            assert (
-                actual_result == expected_result
-            ), f"incorrect result for combining {left} and {right}: {actual_result} != {expected_result}"
-        else:
-            assert not rule.can_combine(left, right), f"did not expect to be able to combine {left} {right}"
+        expected_result = get_expected_result(left, right, expected_combinations)
+        actual_result = rule.combine(left, right)
+        assert (
+            actual_result == expected_result
+        ), f"combining {left} and {right} => {[str(x) for x in actual_result]} != {[str(x) for x in expected_result]}"
